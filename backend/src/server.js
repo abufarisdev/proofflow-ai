@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import reportRoutes from "./routes/reports.route.js";
 import authRoutes from "./routes/auth.js";
 
 const app = express();
