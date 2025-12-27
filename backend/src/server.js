@@ -13,6 +13,8 @@ app.get("/", (req, res) => {
   res.send("Backend running on localhost 🚀");
 });
 
+app.use("/reports", reportRoutes);
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Backend running at http://localhost:${PORT}`);
