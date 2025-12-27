@@ -1,6 +1,6 @@
 import express from "express";
 
-import firebaseAuth from "../src/middleware/firebaseAuth.js";
+import firebaseAuth from "../middleware/firebaseAuth.js";
 
 
 
