@@ -1,21 +1,50 @@
+
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Github, Shield, LinkIcon } from "lucide-react"
+import { getGithubAuthUrl, exchangeCodeForToken } from "@/services/authService"
 
 export function AuthenticationSection() {
   const [githubConnected, setGithubConnected] = useState(false)
   const [showOAuthInfo, setShowOAuthInfo] = useState(false)
+  const [githubUser, setGithubUser] = useState(null);
 
-  const handleGithubAction = () => {
-    if (githubConnected) {
-      setGithubConnected(false)
-    } else {
-      setGithubConnected(true)
-      setShowOAuthInfo(true)
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get("code");
+
+    if (code && !githubConnected) {
+      exchangeCodeForToken(code)
+        .then((data) => {
+          // Assuming the data returned includes user information
+          setGithubConnected(true);
+          setShowOAuthInfo(true);
+        })
+        .catch((error) => {
+          console.error("Failed to exchange code for token", error);
+        });
     }
-  }
+  }, []);
+
+  const handleGithubAction = async () => {
+    if (githubConnected) {
+      // Handle disconnection if necessary
+      setGithubConnected(false);
+      setShowOAuthInfo(false);
+      setGithubUser(null);
+    } else {
+      try {
+        const authUrl = await getGithubAuthUrl();
+        window.location.href = authUrl;
+      } catch (error) {
+        console.error("Failed to get GitHub auth URL", error);
+      }
+    }
+  };
+
 
   return (
     <Card className="bg-card border-border overflow-hidden">
@@ -40,7 +69,7 @@ export function AuthenticationSection() {
               <div>
                 <h3 className="font-semibold text-foreground">GitHub Authentication</h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {githubConnected ? "Connected as @alexjohnson" : "GitHub Not Connected"}
+                  {githubConnected ? `Connected as @${githubUser}` : "GitHub Not Connected"}
                 </p>
               </div>
             </div>
@@ -70,11 +99,11 @@ export function AuthenticationSection() {
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="text-muted-foreground text-xs uppercase tracking-wide">GitHub Username</p>
-                  <p className="text-foreground font-medium mt-1">@alexjohnson</p>
+                  <p className="text-foreground font-medium mt-1">@{githubUser}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground text-xs uppercase tracking-wide">Connected Since</p>
-                  <p className="text-foreground font-medium mt-1">Dec 26, 2025</p>
+                  <p className="text-foreground font-medium mt-1">{new Date().toLocaleDateString()}</p>
                 </div>
                 <div className="col-span-2">
                   <p className="text-muted-foreground text-xs uppercase tracking-wide">Token Status</p>
