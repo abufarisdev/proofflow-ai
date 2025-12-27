@@ -1,9 +1,24 @@
 "use client"
 
+import { useState } from "react"
 import { Card } from "@/components/ui/card"
 import { ChevronRight, Bell, Lock, Users, Database } from "lucide-react"
 
-const settingsSections = [
+interface SettingItem {
+  label: string
+  enabled?: boolean
+  value?: string
+  count?: string
+}
+
+interface SettingSection {
+  icon: any
+  title: string
+  description: string
+  items: SettingItem[]
+}
+
+const initialSettingsSections: SettingSection[] = [
   {
     icon: Bell,
     title: "Notifications",
@@ -47,6 +62,26 @@ const settingsSections = [
 ]
 
 export function SettingsPage() {
+  const [sections, setSections] = useState<SettingSection[]>(initialSettingsSections)
+
+  const handleToggle = (sectionIndex: number, itemIndex: number) => {
+    setSections(prevSections => {
+      const newSections = [...prevSections]
+      const section = { ...newSections[sectionIndex] }
+      const items = [...section.items]
+      const item = { ...items[itemIndex] }
+
+      if (item.enabled !== undefined) {
+        item.enabled = !item.enabled
+        items[itemIndex] = item
+        section.items = items
+        newSections[sectionIndex] = section
+      }
+
+      return newSections
+    })
+  }
+
   return (
     <div className="p-8 bg-background min-h-screen">
       {/* Header */}
@@ -57,10 +92,10 @@ export function SettingsPage() {
 
       {/* Settings Sections */}
       <div className="space-y-6">
-        {settingsSections.map((section, index) => {
+        {sections.map((section, sectionIndex) => {
           const Icon = section.icon
           return (
-            <Card key={index} className="bg-card border-border overflow-hidden">
+            <Card key={sectionIndex} className="bg-card border-border overflow-hidden">
               {/* Section Header */}
               <div className="p-6 border-b border-border flex items-start justify-between">
                 <div className="flex items-start gap-4">
@@ -85,13 +120,14 @@ export function SettingsPage() {
                     <span className="text-foreground font-medium">{item.label}</span>
                     <div>
                       {item.enabled !== undefined ? (
-                        <div
+                        <button
+                          onClick={() => handleToggle(sectionIndex, itemIndex)}
                           className={`w-12 h-6 rounded-full transition-colors ${item.enabled ? "bg-chart-1" : "bg-border"}`}
                         >
                           <div
                             className={`w-5 h-5 rounded-full bg-white transition-transform ${item.enabled ? "translate-x-6" : "translate-x-0.5"} mt-0.5`}
                           />
-                        </div>
+                        </button>
                       ) : (
                         <span className="text-sm text-muted-foreground">{item.count || item.value}</span>
                       )}
