@@ -1,10 +1,12 @@
+
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
 import { BarChart3, FileText, Settings, Moon, Sun, LogOut, User } from "lucide-react"
 import { useState, useEffect } from "react"
+import { logout } from "@/services/authService";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: BarChart3 },
@@ -17,6 +19,7 @@ export function Sidebar() {
   const pathname = usePathname()
   const { theme, setTheme, resolvedTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
+  const router = useRouter();
 
   useEffect(() => {
     setMounted(true)
@@ -25,6 +28,11 @@ export function Sidebar() {
   const toggleTheme = () => {
     setTheme(resolvedTheme === "dark" ? "light" : "dark")
   }
+
+  const handleLogout = async () => {
+    await logout();
+    router.push('/landing');
+  };
 
   if (!mounted) return null
 
@@ -74,7 +82,7 @@ export function Sidebar() {
           {resolvedTheme === "light" ? <Moon size={20} /> : <Sun size={20} />}
           <span className="text-sm font-medium">{resolvedTheme === "light" ? "Dark" : "Light"} Mode</span>
         </button>
-        <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sidebar-foreground hover:bg-sidebar-accent transition-colors">
+        <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sidebar-foreground hover:bg-sidebar-accent transition-colors">
           <LogOut size={20} />
           <span className="text-sm font-medium">Logout</span>
         </button>

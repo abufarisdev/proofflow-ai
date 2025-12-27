@@ -10,6 +10,15 @@ import {
 
 const API_URL = "http://localhost:5000/api/auth";
 
+const getAuthHeaders = async () => {
+    const user = auth.currentUser;
+    if (user) {
+        const token = await user.getIdToken();
+        return { headers: { Authorization: `Bearer ${token}` } };
+    }
+    return {};
+}
+
 export const getGithubAuthUrl = async () => {
   try {
     const response = await axios.get(`${API_URL}/github`);
@@ -40,6 +49,8 @@ export const getGithubToken = () => {
 export const signUpWithEmailAndPassword = async (email: string, password: string): Promise<UserCredential['user']> => {
   try {
     const userCredential = await firebaseCreateUserWithEmailAndPassword(auth, email, password);
+    const token = await userCredential.user.getIdToken();
+    localStorage.setItem('firebase_id_token', token);
     return userCredential.user;
   } catch (error) {
     console.error("Error signing up", error);
@@ -50,6 +61,8 @@ export const signUpWithEmailAndPassword = async (email: string, password: string
 export const signInWithEmailAndPassword = async (email: string, password: string): Promise<UserCredential['user']> => {
   try {
     const userCredential = await firebaseSignInWithEmailAndPassword(auth, email, password);
+    const token = await userCredential.user.getIdToken();
+    localStorage.setItem('firebase_id_token', token);
     return userCredential.user;
   } catch (error) {
     console.error("Error signing in", error);
@@ -61,8 +74,11 @@ export const logout = async () => {
   try {
     await firebaseSignOut(auth);
     localStorage.removeItem("github_token");
+    localStorage.removeItem("firebase_id_token");
   } catch (error) {
     console.error("Error signing out", error);
     throw error;
   }
 };
+
+export { getAuthHeaders };

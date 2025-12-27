@@ -1,10 +1,12 @@
+
 import type React from "react"
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
-import { Sidebar } from "@/components/sidebar"
 import { ThemeProvider } from "@/components/theme-provider"
+import RouteGuard from "@/components/route-guard";
+import ConditionalSidebar from "@/components/conditional-sidebar";
 
 const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
@@ -41,10 +43,12 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`font-sans antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-          <div className="flex h-screen">
-            <Sidebar />
-            <main className="flex-1 overflow-auto">{children}</main>
-          </div>
+          <RouteGuard>
+            <div className="flex h-screen">
+              <ConditionalSidebar />
+              <main className="flex-1 overflow-auto">{children}</main>
+            </div>
+          </RouteGuard>
         </ThemeProvider>
         <Analytics />
       </body>
