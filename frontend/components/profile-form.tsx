@@ -1,3 +1,4 @@
+
 "use client"
 
 import type React from "react"
@@ -5,6 +6,8 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Mail } from "lucide-react"
+import { getGithubToken } from "@/services/authService"
+import { getUser } from "@/services/userService"
 
 interface ProfileFormProps {
   isEditing: boolean
@@ -14,14 +17,27 @@ interface ProfileFormProps {
 export function ProfileForm({ isEditing, setIsEditing }: ProfileFormProps) {
   const [saveMessage, setSaveMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
   const [formData, setFormData] = useState({
-    displayName: "Alex Johnson",
-    email: "alex.johnson@example.com",
-    organization: "Tech University",
-    role: "Developer",
-    bio: "Full-stack developer passionate about project authenticity verification and open-source contributions.",
+    displayName: "",
+    email: "",
+    organization: "",
+    role: "",
+    bio: "",
   })
-
   const [editFormData, setEditFormData] = useState(formData)
+
+  useEffect(() => {
+    const token = getGithubToken();
+    if (token) {
+      getUser(token)
+        .then((data) => {
+          setFormData(data);
+          setEditFormData(data);
+        })
+        .catch((error) => {
+          console.error("Failed to get user data", error);
+        });
+    }
+  }, []);
 
   useEffect(() => {
     if (saveMessage) {
@@ -69,7 +85,7 @@ export function ProfileForm({ isEditing, setIsEditing }: ProfileFormProps) {
             {/* Avatar */}
             <div className="flex-shrink-0">
               <div className="w-24 h-24 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center">
-                <span className="text-3xl font-bold text-primary-foreground">AJ</span>
+                <span className="text-3xl font-bold text-primary-foreground">{formData.displayName.substring(0, 2).toUpperCase()}</span>
               </div>
             </div>
 
