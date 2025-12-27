@@ -1,21 +1,82 @@
+
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
-import { Github, Shield, LinkIcon } from "lucide-react"
+import { Github, Shield, LinkIcon, Mail } from "lucide-react"
+import { 
+  getGithubAuthUrl, 
+  exchangeCodeForToken, 
+  getGithubToken, 
+  logout, 
+  signUpWithEmailAndPassword, 
+  signInWithEmailAndPassword 
+} from "@/services/authService"
 
 export function AuthenticationSection() {
   const [githubConnected, setGithubConnected] = useState(false)
   const [showOAuthInfo, setShowOAuthInfo] = useState(false)
+  const [githubUser, setGithubUser] = useState(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [error, setError] = useState(null);
 
-  const handleGithubAction = () => {
-    if (githubConnected) {
-      setGithubConnected(false)
-    } else {
-      setGithubConnected(true)
-      setShowOAuthInfo(true)
+  useEffect(() => {
+    const token = getGithubToken();
+    if (token) {
+      setGithubConnected(true);
+      setShowOAuthInfo(true);
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get("code");
+
+    if (code && !githubConnected) {
+      exchangeCodeForToken(code)
+        .then((data) => {
+          setGithubConnected(true);
+          setShowOAuthInfo(true);
+        })
+        .catch((error) => {
+          console.error("Failed to exchange code for token", error);
+        });
+    }
+  }, [githubConnected]);
+
+  const handleGithubAction = async () => {
+    if (githubConnected) {
+      logout();
+      setGithubConnected(false);
+      setShowOAuthInfo(false);
+      setGithubUser(null);
+    } else {
+      try {
+        const authUrl = await getGithubAuthUrl();
+        window.location.href = authUrl;
+      } catch (error) {
+        console.error("Failed to get GitHub auth URL", error);
+      }
+    }
+  };
+  
+  const handleEmailAuth = async (e) => {
+    e.preventDefault();
+    setError(null);
+
+    try {
+      if (isSignUp) {
+        await signUpWithEmailAndPassword(email, password);
+      } else {
+        await signInWithEmailAndPassword(email, password);
+      }
+      // Handle successful login/signup (e.g., redirect)
+    } catch (error) {
+      setError(error.message);
+    }
+  };
 
   return (
     <Card className="bg-card border-border overflow-hidden">
@@ -40,7 +101,7 @@ export function AuthenticationSection() {
               <div>
                 <h3 className="font-semibold text-foreground">GitHub Authentication</h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {githubConnected ? "Connected as @alexjohnson" : "GitHub Not Connected"}
+                  {githubConnected ? `Connected as @${githubUser}` : "GitHub Not Connected"}
                 </p>
               </div>
             </div>
@@ -70,11 +131,11 @@ export function AuthenticationSection() {
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="text-muted-foreground text-xs uppercase tracking-wide">GitHub Username</p>
-                  <p className="text-foreground font-medium mt-1">@alexjohnson</p>
+                  <p className="text-foreground font-medium mt-1">@{githubUser}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground text-xs uppercase tracking-wide">Connected Since</p>
-                  <p className="text-foreground font-medium mt-1">Dec 26, 2025</p>
+                  <p className="text-foreground font-medium mt-1">{new Date().toLocaleDateString()}</p>
                 </div>
                 <div className="col-span-2">
                   <p className="text-muted-foreground text-xs uppercase tracking-wide">Token Status</p>
@@ -84,21 +145,53 @@ export function AuthenticationSection() {
             </div>
           )}
 
-          {/* JWT Info Placeholder */}
+          {/* Email/Password Authentication */}
           <div className="p-6 border border-border rounded-lg bg-muted/30">
-            <h4 className="font-medium text-foreground mb-2">Additional Authentication Methods</h4>
-            <p className="text-sm text-muted-foreground mb-4">JWT tokens and other OAuth providers coming soon.</p>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between p-3 bg-muted/50 rounded">
-                <span className="text-sm font-medium text-foreground">JWT Token</span>
-                <span className="text-xs bg-muted px-2 py-1 rounded text-muted-foreground">Coming Soon</span>
+            <div className="flex items-center gap-4 mb-4">
+              <div className="p-2 bg-foreground rounded-lg">
+                <Mail className="w-5 h-5 text-background" />
               </div>
-              <div className="flex items-center justify-between p-3 bg-muted/50 rounded">
-                <span className="text-sm font-medium text-foreground">Google OAuth</span>
-                <span className="text-xs bg-muted px-2 py-1 rounded text-muted-foreground">Coming Soon</span>
+              <div>
+                <h3 className="font-semibold text-foreground">Email & Password</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {isSignUp ? "Create a new account" : "Sign in with your email"}
+                </p>
               </div>
             </div>
+            <form onSubmit={handleEmailAuth} className="space-y-4">
+              <input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              {error && <p className="text-destructive text-sm">{error}</p>}
+              <div className="flex items-center justify-between">
+                <button
+                  type="submit"
+                  className="px-6 py-2 rounded-lg font-medium bg-primary text-primary-foreground transition-opacity hover:opacity-90"
+                >
+                  {isSignUp ? "Sign Up" : "Sign In"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsSignUp(!isSignUp)}
+                  className="text-sm text-muted-foreground hover:text-foreground"
+                >
+                  {isSignUp ? "Already have an account? Sign In" : "Don\'t have an account? Sign Up"}
+                </button>
+              </div>
+            </form>
           </div>
+
         </div>
       </div>
     </Card>

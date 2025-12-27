@@ -1,3 +1,4 @@
+
 "use client"
 
 import { Card } from "@/components/ui/card"
@@ -15,40 +16,51 @@ import {
   Cell,
 } from "recharts"
 import { TrendingUp, AlertCircle, CheckCircle, Clock } from "lucide-react"
-
-// Mock data
-const activityData = [
-  { date: "Jan 1", submissions: 12, verified: 10 },
-  { date: "Jan 2", submissions: 19, verified: 15 },
-  { date: "Jan 3", submissions: 15, verified: 12 },
-  { date: "Jan 4", submissions: 22, verified: 19 },
-  { date: "Jan 5", submissions: 18, verified: 16 },
-  { date: "Jan 6", submissions: 25, verified: 23 },
-  { date: "Jan 7", submissions: 28, verified: 25 },
-]
-
-const confidenceData = [
-  { name: "High (>90%)", value: 156, color: "hsl(var(--color-chart-1))" },
-  { name: "Medium (70-90%)", value: 89, color: "hsl(var(--color-chart-2))" },
-  { name: "Low (<70%)", value: 34, color: "hsl(var(--color-chart-3))" },
-]
-
-const recentProjects = [
-  { id: 1, name: "E-Commerce Platform", status: "verified", confidence: 94, date: "2025-01-20" },
-  { id: 2, name: "Social Media App", status: "verified", confidence: 87, date: "2025-01-19" },
-  { id: 3, name: "AI Chat Service", status: "pending", confidence: 72, date: "2025-01-18" },
-  { id: 4, name: "Mobile Fitness App", status: "verified", confidence: 91, date: "2025-01-17" },
-  { id: 5, name: "Analytics Dashboard", status: "pending", confidence: 65, date: "2025-01-16" },
-]
-
-const activityTimeline = [
-  { id: 1, action: "Project verified", project: "E-Commerce Platform", time: "2 hours ago" },
-  { id: 2, action: "Analysis completed", project: "AI Chat Service", time: "4 hours ago" },
-  { id: 3, action: "New submission", project: "Mobile Fitness App", time: "6 hours ago" },
-  { id: 4, action: "Project verified", project: "Analytics Dashboard", time: "1 day ago" },
-]
+import { getReports } from "@/services/reportService"
+import { getGithubToken } from "@/services/authService"
+import { useState, useEffect } from "react"
 
 export function Dashboard() {
+  const [reports, setReports] = useState([]);
+
+  useEffect(() => {
+    const token = getGithubToken();
+    if (token) {
+      getReports(token)
+        .then((data) => {
+          setReports(data);
+        })
+        .catch((error) => {
+          console.error("Failed to get reports", error);
+        });
+    }
+  }, []);
+
+  const totalProjects = reports.length;
+  const verifiedProjects = reports.filter(report => report.status === 'verified').length;
+  const pendingReviews = reports.filter(report => report.status === 'pending').length;
+  const flaggedIssues = reports.filter(report => report.status === 'flagged').length;
+
+  const activityData = reports.reduce((acc, report) => {
+    const date = new Date(report.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const existing = acc.find(item => item.date === date);
+    if (existing) {
+      existing.submissions++;
+      if (report.status === 'verified') {
+        existing.verified++;
+      }
+    } else {
+      acc.push({ date, submissions: 1, verified: report.status === 'verified' ? 1 : 0 });
+    }
+    return acc;
+  }, []);
+
+  const confidenceData = [
+    { name: "High (>90%)", value: reports.filter(r => r.confidence > 90).length, color: "hsl(var(--color-chart-1))" },
+    { name: "Medium (70-90%)", value: reports.filter(r => r.confidence >= 70 && r.confidence <= 90).length, color: "hsl(var(--color-chart-2))" },
+    { name: "Low (<70%)", value: reports.filter(r => r.confidence < 70).length, color: "hsl(var(--color-chart-3))" },
+  ]
+
   return (
     <div className="p-8 bg-background">
       {/* Header */}
@@ -63,40 +75,38 @@ export function Dashboard() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm text-muted-foreground mb-1">Total Projects</p>
-              <p className="text-3xl font-bold text-foreground">279</p>
+              <p className="text-3xl font-bold text-foreground">{totalProjects}</p>
             </div>
             <TrendingUp className="w-5 h-5 text-chart-1" />
           </div>
-          <p className="text-xs text-muted-foreground mt-4">+12 this week</p>
         </Card>
 
         <Card className="p-6 bg-card border-border">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm text-muted-foreground mb-1">Verified Projects</p>
-              <p className="text-3xl font-bold text-foreground">245</p>
+              <p className="text-3xl font-bold text-foreground">{verifiedProjects}</p>
             </div>
             <CheckCircle className="w-5 h-5 text-chart-1" />
           </div>
-          <p className="text-xs text-muted-foreground mt-4">87.8% success rate</p>
+          <p className="text-xs text-muted-foreground mt-4">{((verifiedProjects / totalProjects) * 100).toFixed(1)}% success rate</p>
         </Card>
 
         <Card className="p-6 bg-card border-border">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm text-muted-foreground mb-1">Pending Reviews</p>
-              <p className="text-3xl font-bold text-foreground">24</p>
+              <p className="text-3xl font-bold text-foreground">{pendingReviews}</p>
             </div>
             <Clock className="w-5 h-5 text-chart-2" />
           </div>
-          <p className="text-xs text-muted-foreground mt-4">Avg. 2.3 hours to review</p>
         </Card>
 
         <Card className="p-6 bg-card border-border">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm text-muted-foreground mb-1">Flagged Issues</p>
-              <p className="text-3xl font-bold text-foreground">10</p>
+              <p className="text-3xl font-bold text-foreground">{flaggedIssues}</p>
             </div>
             <AlertCircle className="w-5 h-5 text-destructive" />
           </div>
@@ -158,20 +168,20 @@ export function Dashboard() {
         <Card className="col-span-1 lg:col-span-2 p-6 bg-card border-border">
           <h2 className="text-lg font-semibold text-foreground mb-6">Recent Projects</h2>
           <div className="space-y-4">
-            {recentProjects.map((project) => (
+            {reports.slice(0, 5).map((project) => (
               <div
                 key={project.id}
                 className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-muted transition-colors"
               >
                 <div className="flex-1">
                   <p className="font-medium text-foreground">{project.name}</p>
-                  <p className="text-sm text-muted-foreground">{project.date}</p>
+                  <p className="text-sm text-muted-foreground">{new Date(project.createdAt).toLocaleDateString()}</p>
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="text-right">
                     <p className="text-sm font-semibold text-foreground">{project.confidence}%</p>
                     <p className={`text-xs ${project.status === "verified" ? "text-chart-1" : "text-chart-2"}`}>
-                      {project.status === "verified" ? "Verified" : "Pending"}
+                      {project.status.charAt(0).toUpperCase() + project.status.slice(1)}
                     </p>
                   </div>
                   <div
@@ -187,7 +197,7 @@ export function Dashboard() {
         <Card className="p-6 bg-card border-border">
           <h2 className="text-lg font-semibold text-foreground mb-6">Recent Activity</h2>
           <div className="space-y-4">
-            {activityTimeline.map((item) => (
+            {reports.slice(0, 4).map((item) => (
               <div key={item.id} className="flex gap-4">
                 <div className="relative flex flex-col items-center">
                   <div className="w-2 h-2 rounded-full bg-chart-1 mt-2" />
@@ -195,8 +205,8 @@ export function Dashboard() {
                 </div>
                 <div className="flex-1 pb-4">
                   <p className="text-sm font-medium text-foreground">{item.action}</p>
-                  <p className="text-xs text-muted-foreground">{item.project}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{item.time}</p>
+                  <p className="text-xs text-muted-foreground">{item.name}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{new Date(item.createdAt).toLocaleDateString()}</p>
                 </div>
               </div>
             ))}
