@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 function connectDB() {
   return mongoose
-    .connect(process.env.MONGODB_URL)
+    .connect(process.env.MONGODB_URL || "mongodb://localhost:27017/proofflow-ai")
     .then(() => {
       console.log("✅ Mongoose connected");
     })

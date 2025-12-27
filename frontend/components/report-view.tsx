@@ -22,8 +22,25 @@ import { Download, Filter, ChevronDown } from "lucide-react"
 import { getReport } from "@/services/reportService"
 import { getGithubToken } from "@/services/authService"
 
+interface Report {
+  name: string;
+  confidence: number;
+  status: string;
+  authenticityMetrics: any[];
+  timelineData: any[];
+  detailedAnalysis: { name: string; value: number }[];
+  flaggedIssues: {
+    id: string;
+    severity: "high" | "medium" | "low";
+    title: string;
+    description: string;
+    timestamp: string;
+  }[];
+  recommendations: { title: string; description: string }[];
+}
+
 export function ReportView() {
-  const [report, setReport] = useState(null);
+  const [report, setReport] = useState<Report | null>(null);
   const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
@@ -167,13 +184,12 @@ export function ReportView() {
             {report.flaggedIssues.map((issue) => (
               <div
                 key={issue.id}
-                className={`p-4 rounded-lg border-l-4 ${
-                  issue.severity === "high"
+                className={`p-4 rounded-lg border-l-4 ${issue.severity === "high"
                     ? "border-l-destructive bg-destructive/10"
                     : issue.severity === "medium"
                       ? "border-l-chart-2 bg-chart-2/10"
                       : "border-l-chart-4 bg-chart-4/10"
-                }`}
+                  }`}
               >
                 <p className="font-medium text-foreground text-sm">{issue.title}</p>
                 <p className="text-xs text-muted-foreground mt-1">{issue.description}</p>
