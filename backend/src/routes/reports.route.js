@@ -1,6 +1,6 @@
 import express from "express";
-import { createReport } from "../controllers/report.controller.js";
-import authMiddleware from "../middleware/auth.middleware.js";
+import { createReport, getAllReports, getReportById } from "../controllers/report.controller.js";
+import authMiddleware from "../middleware/firebaseAuth.js";
 
 const router = express.Router();
 

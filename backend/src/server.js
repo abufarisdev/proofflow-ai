@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
-import reportRoutes from "./routes/report.routes.js";
+import reportRoutes from "./routes/reports.route.js";
+import userRoutes from "./routes/users.route.js";
 
 const app = express();
 
@@ -11,7 +12,8 @@ app.get("/", (req, res) => {
   res.send("Backend running on localhost 🚀");
 });
 
-app.use("/reports", reportRoutes);
+app.use("/api/reports", reportRoutes);
+app.use("/api/users", userRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
