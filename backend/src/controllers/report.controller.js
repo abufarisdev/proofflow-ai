@@ -14,7 +14,7 @@ export const createReport = async (req, res) => {
       });
     }
 
-    const userId = req.user?._id; // safe optional chaining
+    const userId = req.user?.uid; // safe optional chaining
     if (!userId) {
       return res.status(401).json({
         success: false,
@@ -87,7 +87,7 @@ export const createReport = async (req, res) => {
 
 export const getAllReports = async (req, res) => {
   try {
-    const userId = req.user?._id;
+    const userId = req.user?.uid;
     if (!userId) {
       return res.status(401).json({
         success: false,
@@ -123,20 +123,20 @@ export const getAllReports = async (req, res) => {
 
 export const getReportById = async (req, res) => {
   try {
-    const reportId = req.params.id;
-    const userId = req.user?._id;
+    const projectId = req.params.id; 
+    const userId = req.user?.uid;
 
-    if (!mongoose.Types.ObjectId.isValid(reportId)) {
+    if (!mongoose.Types.ObjectId.isValid(projectId)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid report ID",
+        message: "Invalid project ID",
       });
     }
 
-    // Find the report and populate project info
-    const report = await Verification.findById(reportId).populate({
+    // Find the report by projectId and populate project info
+    const report = await Verification.findOne({ projectId }).populate({
       path: "projectId",
-      match: { userId }, // only include if the project belongs to the user
+      match: { userId }, // only include if the project belongs to the logged-in user
       select: "repoName repoUrl status",
     });
 
@@ -152,7 +152,7 @@ export const getReportById = async (req, res) => {
       data: report,
     });
   } catch (error) {
-    console.error("Get Report By ID Error:", error);
+    console.error("Get Report By Project ID Error:", error);
     return res.status(500).json({
       success: false,
       message: "Internal server error",
