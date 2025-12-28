@@ -1,7 +1,8 @@
-"use client"
 
-import { Card } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
+'use client';
+
+import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   BarChart,
   Bar,
@@ -14,12 +15,12 @@ import {
   PieChart,
   Pie,
   Cell,
-} from "recharts"
-import { TrendingUp, AlertCircle, CheckCircle, Clock } from "lucide-react"
-import { getReports } from "@/services/reportService"
-import { getGithubToken } from "@/services/authService"
-import { useState, useEffect } from "react"
-import { Report } from "@/types"
+} from "recharts";
+import { TrendingUp, AlertCircle, CheckCircle, Clock } from "lucide-react";
+import { getReports } from "@/services/reportService";
+import { getGithubToken } from "@/services/authService";
+import { useState, useEffect } from "react";
+import { Report } from "@/types";
 
 export function Dashboard() {
   const [reports, setReports] = useState<Report[]>([]);
@@ -83,14 +84,14 @@ export function Dashboard() {
     { name: "High (>90%)", value: reports.filter(r => r.confidence > 90).length, color: "hsl(var(--color-chart-1))" },
     { name: "Medium (70-90%)", value: reports.filter(r => r.confidence >= 70 && r.confidence <= 90).length, color: "hsl(var(--color-chart-2))" },
     { name: "Low (<70%)", value: reports.filter(r => r.confidence < 70).length, color: "hsl(var(--color-chart-3))" },
-  ]
+  ];
 
   return (
-    <div className="p-8 bg-background">
+    <div className="p-4 sm:p-8 bg-background">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground mb-2">Dashboard</h1>
-        <p className="text-muted-foreground">Welcome back! Here's your project authenticity overview.</p>
+      <div className="mb-8 welcome-banner">
+        <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Welcome back!</h1>
+        <p className="text-white/80 text-sm sm:text-base">Here's your project authenticity overview.</p>
       </div>
 
       {/* Key Metrics */}
@@ -293,5 +294,5 @@ export function Dashboard() {
         </Card>
       </div>
     </div>
-  )
+  );
 }

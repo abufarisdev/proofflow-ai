@@ -1,5 +1,49 @@
-import { ReportView } from "@/components/report-view"
+
+'use client';
+
+import { useEffect, useState } from 'react';
+import { auth } from '@/firebase';
+import { User } from 'firebase/auth';
+import { ReportView } from '@/components/report-view';
+import { Spinner } from '@/components/ui/spinner';
+import { Sidebar } from '@/components/sidebar';
+import { useRouter } from 'next/navigation';
 
 export default function ReportsPage() {
-  return <ReportView />
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setUser(user);
+      setLoading(false);
+      if (!user && !loading) {
+        router.push('/');
+      }
+    });
+
+    return () => unsubscribe();
+  }, [router, loading]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Spinner />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
+
+  return (
+    <div className="flex h-screen">
+      <Sidebar />
+      <main className="flex-1 overflow-auto">
+        <ReportView />
+      </main>
+    </div>
+  );
 }

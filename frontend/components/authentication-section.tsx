@@ -1,68 +1,87 @@
 
-"use client"
+'use client';
 
-import { useState, useEffect } from "react"
-import { Card } from "@/components/ui/card"
-import { Github, Shield, LinkIcon, Mail } from "lucide-react"
-import {
-  getGithubAuthUrl,
-  exchangeCodeForToken,
-  getGithubToken,
-  logout,
-  signUpWithEmailAndPassword,
-  signInWithEmailAndPassword
-} from "@/services/authService"
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { signInWithEmailAndPassword, signUpWithEmailAndPassword } from '@/services/authService';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
-export function AuthenticationSection() {
-  const [githubConnected, setGithubConnected] = useState(false)
-  const [showOAuthInfo, setShowOAuthInfo] = useState(false)
-  const [githubUser, setGithubUser] = useState<string | null>(null);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isSignUp, setIsSignUp] = useState(false);
+interface AuthFormProps {
+  handleAuth: (e: React.FormEvent) => Promise<void>;
+  email: string;
+  setEmail: (email: string) => void;
+  password: string;
+  setPassword: (password: string) => void;
+  error: string | null;
+  isSignUp: boolean;
+  toggleMobile: () => void;
+}
+
+const AuthForm = ({ handleAuth, email, setEmail, password, setPassword, error, isSignUp, toggleMobile }: AuthFormProps) => (
+  <form onSubmit={handleAuth} className="flex flex-col items-center justify-center h-full px-8 sm:px-12 text-center bg-white dark:bg-card">
+    <h1 className="text-2xl font-bold mb-4 text-foreground">{isSignUp ? 'Create Account' : 'Sign in'}</h1>
+    <div className="w-full space-y-4">
+      <div className="space-y-1 text-left">
+        <Label htmlFor={`${isSignUp ? 'signup' : 'signin'}-email`}>Email</Label>
+        <Input 
+          id={`${isSignUp ? 'signup' : 'signin'}-email`} 
+          type="email" 
+          placeholder="Email" 
+          value={email} 
+          onChange={(e) => setEmail(e.target.value)} 
+          className="w-full"
+        />
+      </div>
+      <div className="space-y-1 text-left">
+        <Label htmlFor={`${isSignUp ? 'signup' : 'signin'}-password`}>Password</Label>
+        <Input 
+          id={`${isSignUp ? 'signup' : 'signin'}-password`} 
+          type="password" 
+          placeholder="Password" 
+          value={password} 
+          onChange={(e) => setPassword(e.target.value)} 
+          className="w-full"
+        />
+      </div>
+    </div>
+    {error && <p className="text-destructive text-sm mt-2">{error}</p>}
+    <Button type="submit" className="mt-6 w-full">{isSignUp ? 'Sign Up' : 'Sign In'}</Button>
+    
+    <div className="mt-6 sm:hidden">
+      <p className="text-sm text-muted-foreground">
+        {isSignUp ? 'Already have an account?' : 'Don\'t have an account?'}
+        <button type="button" onClick={toggleMobile} className="ml-2 font-semibold text-primary">
+          {isSignUp ? 'Sign In' : 'Sign Up'}
+        </button>
+      </p>
+    </div>
+  </form>
+);
+
+const OverlayPanel = ({ title, description, buttonText, onClick }: { title: string, description: string, buttonText: string, onClick: () => void }) => (
+  <div className="overlay-panel flex flex-col items-center justify-center px-10 text-center h-full">
+    <h1 className="text-2xl font-bold text-white">{title}</h1>
+    <p className="mt-4 text-sm text-white opacity-90">{description}</p>
+    <Button 
+      variant="outline" 
+      className="mt-8 border-white bg-transparent text-white hover:bg-white hover:text-[#3b82f6] transition-all font-semibold" 
+      onClick={onClick}
+    >
+      {buttonText}
+    </Button>
+  </div>
+);
+
+export function AuthenticationSection({ isSignUp: initialIsSignUp = false }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [isSignUp, setIsSignUp] = useState(initialIsSignUp);
+  const router = useRouter();
 
-  useEffect(() => {
-    const token = getGithubToken();
-    if (token) {
-      setGithubConnected(true);
-      setShowOAuthInfo(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get("code");
-
-    if (code && !githubConnected) {
-      exchangeCodeForToken(code)
-        .then((data) => {
-          setGithubConnected(true);
-          setShowOAuthInfo(true);
-        })
-        .catch((error) => {
-          console.error("Failed to exchange code for token", error);
-        });
-    }
-  }, [githubConnected]);
-
-  const handleGithubAction = async () => {
-    if (githubConnected) {
-      logout();
-      setGithubConnected(false);
-      setShowOAuthInfo(false);
-      setGithubUser(null);
-    } else {
-      try {
-        const authUrl = await getGithubAuthUrl();
-        window.location.href = authUrl;
-      } catch (error) {
-        console.error("Failed to get GitHub auth URL", error);
-      }
-    }
-  };
-
-  const handleEmailAuth = async (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
@@ -72,127 +91,75 @@ export function AuthenticationSection() {
       } else {
         await signInWithEmailAndPassword(email, password);
       }
-      // Handle successful login/signup (e.g., redirect)
+      router.push('/');
     } catch (error: any) {
-      setError(error.message);
+      let errorMessage = 'An unexpected error occurred.';
+      if (error.code === 'auth/email-already-in-use') {
+        errorMessage = 'This email is already in use.';
+      } else if (error.code === 'auth/wrong-password') {
+        errorMessage = 'Incorrect password.';
+      } else if (error.code === 'auth/user-not-found') {
+        errorMessage = 'No user found with this email.';
+      }
+      setError(errorMessage);
     }
   };
 
   return (
-    <Card className="bg-card border-border overflow-hidden">
-      <div className="p-8">
-        <div className="flex items-start gap-4 mb-8 pb-8 border-b border-border">
-          <div className="p-3 bg-muted rounded-lg">
-            <Shield className="w-6 h-6 text-foreground" />
-          </div>
-          <div className="flex-1">
-            <h2 className="text-xl font-semibold text-foreground">Identity & Security</h2>
-            <p className="text-sm text-muted-foreground mt-1">Connect authentication providers for secure access</p>
+    <div className="flex items-center justify-center min-h-screen bg-muted/30 p-4">
+      <div className={`auth-container shadow-2xl relative overflow-hidden w-full max-w-[768px] min-h-[480px] rounded-xl bg-white ${isSignUp ? 'right-panel-active' : ''}`}>
+        
+        {/* Sign Up Form */}
+        <div className={`absolute top-0 h-full transition-all duration-600 ease-in-out left-0 w-full sm:w-1/2 z-[1] ${isSignUp ? 'sm:translate-x-full opacity-100 z-[5] animate-show' : 'opacity-0'}`}>
+          <AuthForm 
+            handleAuth={handleAuth} 
+            email={email} 
+            setEmail={setEmail} 
+            password={password} 
+            setPassword={setPassword} 
+            error={error} 
+            isSignUp={true}
+            toggleMobile={() => setIsSignUp(false)}
+          />
+        </div>
+
+        {/* Sign In Form */}
+        <div className={`absolute top-0 h-full transition-all duration-600 ease-in-out left-0 w-full sm:w-1/2 z-[2] ${isSignUp ? 'sm:translate-x-full opacity-0' : 'opacity-100'}`}>
+          <AuthForm 
+            handleAuth={handleAuth} 
+            email={email} 
+            setEmail={setEmail} 
+            password={password} 
+            setPassword={setPassword} 
+            error={error} 
+            isSignUp={false}
+            toggleMobile={() => setIsSignUp(true)}
+          />
+        </div>
+
+        {/* Overlay - Hidden on mobile */}
+        <div className="hidden sm:block absolute top-0 left-1/2 w-1/2 h-full overflow-hidden transition-transform duration-600 ease-in-out z-[100] transform translate-x-0 right-panel-active:-translate-x-full">
+          <div className={`overlay bg-gradient-to-br from-[#3b82f6] to-[#1d4ed8] text-white relative -left-full h-full w-[200%] transform translate-x-0 transition-transform duration-600 ease-in-out ${isSignUp ? 'translate-x-1/2' : ''}`}>
+            <div className={`absolute top-0 h-full w-1/2 transition-transform duration-600 ease-in-out ${isSignUp ? 'translate-x-0' : '-translate-x-[20%]'}`}>
+              <OverlayPanel 
+                title="Welcome Back!" 
+                description="To keep connected with us please login with your personal info" 
+                buttonText="Sign In" 
+                onClick={() => setIsSignUp(false)} 
+              />
+            </div>
+            <div className={`absolute top-0 right-0 h-full w-1/2 transition-transform duration-600 ease-in-out ${isSignUp ? 'translate-x-[20%]' : 'translate-x-0'}`}>
+              <OverlayPanel 
+                title="Hello, Friend!" 
+                description="Enter your personal details and start your journey with us" 
+                buttonText="Sign Up" 
+                onClick={() => setIsSignUp(true)} 
+              />
+            </div>
           </div>
         </div>
 
-        {/* GitHub Authentication */}
-        <div className="space-y-6">
-          <div className="flex items-center justify-between p-6 bg-muted/50 rounded-lg border border-border">
-            <div className="flex items-center gap-4">
-              <div className="p-2 bg-foreground rounded-lg">
-                <Github className="w-5 h-5 text-background" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-foreground">GitHub Authentication</h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {githubConnected ? `Connected as @${githubUser}` : "GitHub Not Connected"}
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={handleGithubAction}
-              className={`px-6 py-2 rounded-lg font-medium transition-opacity hover:opacity-90 ${githubConnected ? "bg-destructive text-destructive-foreground" : "bg-primary text-primary-foreground"
-                }`}
-            >
-              {githubConnected ? "Revoke" : "Connect GitHub"}
-            </button>
-          </div>
-
-          {/* OAuth Info Section */}
-          {showOAuthInfo && (
-            <div className="p-6 bg-primary/5 border border-primary/20 rounded-lg space-y-4">
-              <div>
-                <h4 className="font-medium text-foreground flex items-center gap-2">
-                  <LinkIcon size={16} />
-                  OAuth Connection Details
-                </h4>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Your GitHub account is now linked for authentication.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-muted-foreground text-xs uppercase tracking-wide">GitHub Username</p>
-                  <p className="text-foreground font-medium mt-1">@{githubUser}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground text-xs uppercase tracking-wide">Connected Since</p>
-                  <p className="text-foreground font-medium mt-1">{new Date().toLocaleDateString()}</p>
-                </div>
-                <div className="col-span-2">
-                  <p className="text-muted-foreground text-xs uppercase tracking-wide">Token Status</p>
-                  <p className="text-foreground font-medium mt-1">Active & Valid</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Email/Password Authentication */}
-          <div className="p-6 border border-border rounded-lg bg-muted/30">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="p-2 bg-foreground rounded-lg">
-                <Mail className="w-5 h-5 text-background" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-foreground">Email & Password</h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {isSignUp ? "Create a new account" : "Sign in with your email"}
-                </p>
-              </div>
-            </div>
-            <form onSubmit={handleEmailAuth} className="space-y-4">
-              <input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-              <input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-              {error && <p className="text-destructive text-sm">{error}</p>}
-              <div className="flex items-center justify-between">
-                <button
-                  type="submit"
-                  className="px-6 py-2 rounded-lg font-medium bg-primary text-primary-foreground transition-opacity hover:opacity-90"
-                >
-                  {isSignUp ? "Sign Up" : "Sign In"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsSignUp(!isSignUp)}
-                  className="text-sm text-muted-foreground hover:text-foreground"
-                >
-                  {isSignUp ? "Already have an account? Sign In" : "Don\'t have an account? Sign Up"}
-                </button>
-              </div>
-            </form>
-          </div>
-
-        </div>
       </div>
-    </Card>
-  )
+    </div>
+  );
 }
