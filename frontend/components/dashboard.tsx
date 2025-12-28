@@ -1,4 +1,3 @@
-
 "use client"
 
 import { Card } from "@/components/ui/card"
@@ -17,28 +16,35 @@ import {
 } from "recharts"
 import { TrendingUp, AlertCircle, CheckCircle, Clock } from "lucide-react"
 import { getReports } from "@/services/reportService"
+import { getGithubToken } from "@/services/authService"
 import { useState, useEffect } from "react"
-
-interface Report {
-  id: string;
-  name: string;
-  status: string;
-  confidence: number;
-  createdAt: string;
-  action?: string;
-}
+import { Report } from "@/types"
 
 export function Dashboard() {
   const [reports, setReports] = useState<Report[]>([]);
 
   useEffect(() => {
-    getReports()
-      .then((data) => {
-        setReports(data);
-      })
-      .catch((error) => {
-        console.error("Failed to get reports", error);
-      });
+    const token = getGithubToken();
+    if (token) {
+      getReports(token)
+        .then((response: any) => {
+          if (response?.data && Array.isArray(response.data)) {
+            const mappedReports: Report[] = response.data.map((item: any) => ({
+              id: item._id,
+              name: item.projectId?.repoName || 'Unknown Project',
+              repoUrl: item.projectId?.repoUrl || '',
+              status: item.projectId?.status || 'pending',
+              confidence: item.confidenceScore || 0,
+              createdAt: item.createdAt,
+              action: 'Report Generated'
+            }));
+            setReports(mappedReports);
+          }
+        })
+        .catch((error) => {
+          console.error("Failed to get reports", error);
+        });
+    }
   }, []);
 
   const totalProjects = reports.length;
@@ -100,7 +106,7 @@ export function Dashboard() {
             </div>
             <CheckCircle className="w-5 h-5 text-chart-1" />
           </div>
-          <p className="text-xs text-muted-foreground mt-4">{((verifiedProjects / totalProjects) * 100).toFixed(1)}% success rate</p>
+          <p className="text-xs text-muted-foreground mt-4">{totalProjects > 0 ? ((verifiedProjects / totalProjects) * 100).toFixed(1) : 0}% success rate</p>
         </Card>
 
         <Card className="p-6 bg-card border-border">
