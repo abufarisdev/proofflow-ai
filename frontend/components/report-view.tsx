@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   BarChart,
   Bar,
@@ -58,7 +59,59 @@ export function ReportView() {
   }, []);
 
   if (!report) {
-    return <div>Loading...</div>;
+    return (
+      <div className="p-8 bg-background min-h-screen">
+        {/* Header Skeleton */}
+        <div className="mb-8">
+          <Skeleton className="h-10 w-64 mb-4" />
+          <div className="flex gap-4">
+            <Skeleton className="h-10 w-32" />
+            <Skeleton className="h-10 w-24" />
+            <Skeleton className="h-10 w-32 ml-auto" />
+          </div>
+        </div>
+
+        {/* Score Card Skeleton */}
+        <Card className="p-8 bg-card border-border mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <Skeleton className="h-4 w-32 mb-2" />
+              <Skeleton className="h-12 w-20" />
+              <Skeleton className="h-4 w-40 mt-2" />
+            </div>
+            <Skeleton className="w-32 h-32 rounded-full" />
+          </div>
+        </Card>
+
+        {/* Charts Grid Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          <Card className="p-6 bg-card border-border h-[400px]">
+            <Skeleton className="h-6 w-32 mb-6" />
+            <div className="flex items-center justify-center h-full">
+              <Skeleton className="w-[200px] h-[200px] rounded-full" />
+            </div>
+          </Card>
+          <Card className="col-span-1 lg:col-span-2 p-6 bg-card border-border h-[400px]">
+            <Skeleton className="h-6 w-48 mb-6" />
+            <div className="w-full h-full flex items-end justify-between gap-4 pb-12">
+              {[...Array(5)].map((_, i) => (
+                <Skeleton key={i} className="w-[15%] h-[60%]" />
+              ))}
+            </div>
+          </Card>
+        </div>
+
+        {/* Details Skeleton */}
+        <Card className="p-6 bg-card border-border">
+          <Skeleton className="h-6 w-48 mb-6" />
+          <div className="space-y-4">
+            {[...Array(3)].map((_, i) => (
+              <Skeleton key={i} className="h-16 w-full" />
+            ))}
+          </div>
+        </Card>
+      </div>
+    );
   }
 
   return (

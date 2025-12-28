@@ -1,6 +1,7 @@
 "use client"
 
 import { Card } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   BarChart,
   Bar,
@@ -22,11 +23,12 @@ import { Report } from "@/types"
 
 export function Dashboard() {
   const [reports, setReports] = useState<Report[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const token = getGithubToken();
     if (token) {
-      getReports(token)
+      getReports()
         .then((response: any) => {
           if (response?.data && Array.isArray(response.data)) {
             const mappedReports: Report[] = response.data.map((item: any) => ({
@@ -43,7 +45,12 @@ export function Dashboard() {
         })
         .catch((error) => {
           console.error("Failed to get reports", error);
+        })
+        .finally(() => {
+          setLoading(false);
         });
+    } else {
+      setLoading(false);
     }
   }, []);
 
@@ -88,94 +95,126 @@ export function Dashboard() {
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <Card className="p-6 bg-card border-border">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Total Projects</p>
-              <p className="text-3xl font-bold text-foreground">{totalProjects}</p>
-            </div>
-            <TrendingUp className="w-5 h-5 text-chart-1" />
-          </div>
-        </Card>
+        {loading ? (
+          <>
+            {[...Array(4)].map((_, i) => (
+              <Card key={i} className="p-6 bg-card border-border">
+                <div className="flex items-start justify-between">
+                  <div className="w-full">
+                    <Skeleton className="h-4 w-24 mb-2" />
+                    <Skeleton className="h-8 w-16" />
+                  </div>
+                  <Skeleton className="h-5 w-5 rounded-full" />
+                </div>
+              </Card>
+            ))}
+          </>
+        ) : (
+          <>
+            <Card className="p-6 bg-card border-border">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Total Projects</p>
+                  <p className="text-3xl font-bold text-foreground">{totalProjects}</p>
+                </div>
+                <TrendingUp className="w-5 h-5 text-chart-1" />
+              </div>
+            </Card>
 
-        <Card className="p-6 bg-card border-border">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Verified Projects</p>
-              <p className="text-3xl font-bold text-foreground">{verifiedProjects}</p>
-            </div>
-            <CheckCircle className="w-5 h-5 text-chart-1" />
-          </div>
-          <p className="text-xs text-muted-foreground mt-4">{totalProjects > 0 ? ((verifiedProjects / totalProjects) * 100).toFixed(1) : 0}% success rate</p>
-        </Card>
+            <Card className="p-6 bg-card border-border">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Verified Projects</p>
+                  <p className="text-3xl font-bold text-foreground">{verifiedProjects}</p>
+                </div>
+                <CheckCircle className="w-5 h-5 text-chart-1" />
+              </div>
+              <p className="text-xs text-muted-foreground mt-4">{totalProjects > 0 ? ((verifiedProjects / totalProjects) * 100).toFixed(1) : 0}% success rate</p>
+            </Card>
 
-        <Card className="p-6 bg-card border-border">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Pending Reviews</p>
-              <p className="text-3xl font-bold text-foreground">{pendingReviews}</p>
-            </div>
-            <Clock className="w-5 h-5 text-chart-2" />
-          </div>
-        </Card>
+            <Card className="p-6 bg-card border-border">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Pending Reviews</p>
+                  <p className="text-3xl font-bold text-foreground">{pendingReviews}</p>
+                </div>
+                <Clock className="w-5 h-5 text-chart-2" />
+              </div>
+            </Card>
 
-        <Card className="p-6 bg-card border-border">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Flagged Issues</p>
-              <p className="text-3xl font-bold text-foreground">{flaggedIssues}</p>
-            </div>
-            <AlertCircle className="w-5 h-5 text-destructive" />
-          </div>
-          <p className="text-xs text-muted-foreground mt-4">Requires attention</p>
-        </Card>
+            <Card className="p-6 bg-card border-border">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Flagged Issues</p>
+                  <p className="text-3xl font-bold text-foreground">{flaggedIssues}</p>
+                </div>
+                <AlertCircle className="w-5 h-5 text-destructive" />
+              </div>
+              <p className="text-xs text-muted-foreground mt-4">Requires attention</p>
+            </Card>
+          </>
+        )}
       </div>
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         {/* Activity Chart */}
-        <Card className="col-span-1 lg:col-span-2 p-6 bg-card border-border">
+        <Card className="col-span-1 lg:col-span-2 p-6 bg-card border-border h-[400px]">
           <h2 className="text-lg font-semibold text-foreground mb-6">Weekly Activity</h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={activityData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--color-border))" />
-              <XAxis dataKey="date" stroke="hsl(var(--color-muted-foreground))" />
-              <YAxis stroke="hsl(var(--color-muted-foreground))" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "hsl(var(--color-card))",
-                  border: "1px solid hsl(var(--color-border))",
-                }}
-              />
-              <Legend />
-              <Bar dataKey="submissions" fill="hsl(var(--color-chart-1))" />
-              <Bar dataKey="verified" fill="hsl(var(--color-chart-2))" />
-            </BarChart>
-          </ResponsiveContainer>
+          {loading ? (
+            <div className="w-full h-[300px] flex items-end gap-2 justify-between">
+              {[...Array(7)].map((_, i) => (
+                <Skeleton key={i} className="w-[10%] h-[60%]" />
+              ))}
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={activityData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--color-border))" />
+                <XAxis dataKey="date" stroke="hsl(var(--color-muted-foreground))" />
+                <YAxis stroke="hsl(var(--color-muted-foreground))" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--color-card))",
+                    border: "1px solid hsl(var(--color-border))",
+                  }}
+                />
+                <Legend />
+                <Bar dataKey="submissions" fill="hsl(var(--color-chart-1))" />
+                <Bar dataKey="verified" fill="hsl(var(--color-chart-2))" />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </Card>
 
         {/* Confidence Distribution */}
-        <Card className="p-6 bg-card border-border">
+        <Card className="p-6 bg-card border-border h-[400px]">
           <h2 className="text-lg font-semibold text-foreground mb-6">Confidence Levels</h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={confidenceData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ name, value }) => `${name}: ${value}`}
-                outerRadius={80}
-                fill="#8884d8"
-                dataKey="value"
-              >
-                {confidenceData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
+          {loading ? (
+            <div className="w-full h-[300px] flex items-center justify-center">
+              <Skeleton className="w-[200px] h-[200px] rounded-full" />
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={confidenceData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, value }) => `${name}: ${value}`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {confidenceData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          )}
         </Card>
       </div>
 
@@ -185,28 +224,39 @@ export function Dashboard() {
         <Card className="col-span-1 lg:col-span-2 p-6 bg-card border-border">
           <h2 className="text-lg font-semibold text-foreground mb-6">Recent Projects</h2>
           <div className="space-y-4">
-            {reports.slice(0, 5).map((project) => (
-              <div
-                key={project.id}
-                className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-muted transition-colors"
-              >
-                <div className="flex-1">
-                  <p className="font-medium text-foreground">{project.name}</p>
-                  <p className="text-sm text-muted-foreground">{new Date(project.createdAt).toLocaleDateString()}</p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <p className="text-sm font-semibold text-foreground">{project.confidence}%</p>
-                    <p className={`text-xs ${project.status === "verified" ? "text-chart-1" : "text-chart-2"}`}>
-                      {project.status.charAt(0).toUpperCase() + project.status.slice(1)}
-                    </p>
+            {loading ? (
+              [...Array(5)].map((_, i) => (
+                <div key={i} className="flex items-center justify-between p-4 rounded-lg border border-border">
+                  <div className="w-full">
+                    <Skeleton className="h-5 w-40 mb-2" />
+                    <Skeleton className="h-4 w-24" />
                   </div>
-                  <div
-                    className={`w-2 h-2 rounded-full ${project.status === "verified" ? "bg-chart-1" : "bg-chart-2"}`}
-                  />
                 </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              reports.slice(0, 5).map((project) => (
+                <div
+                  key={project.id}
+                  className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-muted transition-colors"
+                >
+                  <div className="flex-1">
+                    <p className="font-medium text-foreground">{project.name}</p>
+                    <p className="text-sm text-muted-foreground">{new Date(project.createdAt).toLocaleDateString()}</p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <p className="text-sm font-semibold text-foreground">{project.confidence}%</p>
+                      <p className={`text-xs ${project.status === "verified" ? "text-chart-1" : "text-chart-2"}`}>
+                        {project.status.charAt(0).toUpperCase() + project.status.slice(1)}
+                      </p>
+                    </div>
+                    <div
+                      className={`w-2 h-2 rounded-full ${project.status === "verified" ? "bg-chart-1" : "bg-chart-2"}`}
+                    />
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </Card>
 
@@ -214,19 +264,31 @@ export function Dashboard() {
         <Card className="p-6 bg-card border-border">
           <h2 className="text-lg font-semibold text-foreground mb-6">Recent Activity</h2>
           <div className="space-y-4">
-            {reports.slice(0, 4).map((item) => (
-              <div key={item.id} className="flex gap-4">
-                <div className="relative flex flex-col items-center">
-                  <div className="w-2 h-2 rounded-full bg-chart-1 mt-2" />
-                  <div className="w-0.5 h-12 bg-border" />
+            {loading ? (
+              [...Array(4)].map((_, i) => (
+                <div key={i} className="flex gap-4">
+                  <Skeleton className="w-2 h-2 rounded-full mt-2" />
+                  <div className="flex-1">
+                    <Skeleton className="h-4 w-3/4 mb-1" />
+                    <Skeleton className="h-3 w-1/2" />
+                  </div>
                 </div>
-                <div className="flex-1 pb-4">
-                  <p className="text-sm font-medium text-foreground">{item.action}</p>
-                  <p className="text-xs text-muted-foreground">{item.name}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{new Date(item.createdAt).toLocaleDateString()}</p>
+              ))
+            ) : (
+              reports.slice(0, 4).map((item) => (
+                <div key={item.id} className="flex gap-4">
+                  <div className="relative flex flex-col items-center">
+                    <div className="w-2 h-2 rounded-full bg-chart-1 mt-2" />
+                    <div className="w-0.5 h-12 bg-border" />
+                  </div>
+                  <div className="flex-1 pb-4">
+                    <p className="text-sm font-medium text-foreground">{item.action}</p>
+                    <p className="text-xs text-muted-foreground">{item.name}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{new Date(item.createdAt).toLocaleDateString()}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </Card>
       </div>

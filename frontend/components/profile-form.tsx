@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Mail, Loader2 } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 import api from "@/lib/api"
 
 interface ProfileFormProps {
@@ -96,8 +97,46 @@ export function ProfileForm({ isEditing, setIsEditing }: ProfileFormProps) {
       )}
 
       {loading ? (
-        <Card className="bg-card border-border p-8 flex justify-center">
-          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        <Card className="bg-card border-border overflow-hidden">
+          <div className="p-8">
+            <div className="flex flex-col md:flex-row gap-8 mb-8 pb-8 border-b border-border">
+              {/* Avatar Skeleton */}
+              <div className="flex-shrink-0">
+                <Skeleton className="w-24 h-24 rounded-full" />
+              </div>
+
+              {/* Profile Info Skeleton */}
+              <div className="flex-1 space-y-4">
+                <Skeleton className="h-8 w-48" />
+                <Skeleton className="h-4 w-64" />
+                <div className="flex gap-3">
+                  <Skeleton className="h-6 w-20 rounded-full" />
+                  <Skeleton className="h-6 w-24 rounded-full" />
+                </div>
+              </div>
+
+              {/* Edit Button Skeleton */}
+              <div className="flex items-start">
+                <Skeleton className="h-10 w-32" />
+              </div>
+            </div>
+
+            {/* Content Skeleton */}
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-6 w-full" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-6 w-full" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-20 w-full" />
+              </div>
+            </div>
+          </div>
         </Card>
       ) : (
         /* Profile Card */
