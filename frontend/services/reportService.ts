@@ -1,13 +1,8 @@
+import api from "@/lib/api";
 
-import axios from "axios";
-
-const API_URL = "http://localhost:5000/api/reports";
-
-export const getReports = async (token: string) => {
+export const getReports = async () => {
   try {
-    const response = await axios.get(API_URL, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await api.get("/reports");
     return response.data;
   } catch (error) {
     console.error("Error getting reports", error);
@@ -15,11 +10,9 @@ export const getReports = async (token: string) => {
   }
 };
 
-export const getReport = async (token: string, id: string) => {
+export const getReport = async (id: string) => {
   try {
-    const response = await axios.get(`${API_URL}/${id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await api.get(`/reports/${id}`);
     return response.data;
   } catch (error) {
     console.error("Error getting report", error);

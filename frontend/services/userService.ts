@@ -1,13 +1,8 @@
+import api from "@/lib/api";
 
-import axios from "axios";
-
-const API_URL = "http://localhost:5000/users";
-
-export const getUser = async (token: string) => {
+export const getUser = async () => {
   try {
-    const response = await axios.get(`${API_URL}/me`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await api.get("/users/profile");
     return response.data;
   } catch (error) {
     console.error("Error getting user", error);

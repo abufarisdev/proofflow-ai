@@ -1,5 +1,4 @@
-
-import axios from "axios";
+import api from "@/lib/api";
 import { auth } from "@/firebase";
 import {
   createUserWithEmailAndPassword as firebaseCreateUserWithEmailAndPassword,
@@ -8,11 +7,9 @@ import {
   UserCredential,
 } from "firebase/auth";
 
-const API_URL = "http://localhost:5000/api/auth";
-
 export const getGithubAuthUrl = async () => {
   try {
-    const response = await axios.get(`${API_URL}/github`);
+    const response = await api.get("/auth/github");
     return response.data.url;
   } catch (error) {
     console.error("Error getting GitHub auth URL", error);
@@ -22,7 +19,7 @@ export const getGithubAuthUrl = async () => {
 
 export const exchangeCodeForToken = async (code: string) => {
   try {
-    const response = await axios.post(`${API_URL}/github/callback`, { code });
+    const response = await api.post("/auth/github/callback", { code });
     if (response.data.access_token) {
       localStorage.setItem("github_token", response.data.access_token);
     }

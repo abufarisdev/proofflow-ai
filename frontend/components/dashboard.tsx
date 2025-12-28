@@ -17,23 +17,28 @@ import {
 } from "recharts"
 import { TrendingUp, AlertCircle, CheckCircle, Clock } from "lucide-react"
 import { getReports } from "@/services/reportService"
-import { getGithubToken } from "@/services/authService"
 import { useState, useEffect } from "react"
 
+interface Report {
+  id: string;
+  name: string;
+  status: string;
+  confidence: number;
+  createdAt: string;
+  action?: string;
+}
+
 export function Dashboard() {
-  const [reports, setReports] = useState([]);
+  const [reports, setReports] = useState<Report[]>([]);
 
   useEffect(() => {
-    const token = getGithubToken();
-    if (token) {
-      getReports(token)
-        .then((data) => {
-          setReports(data);
-        })
-        .catch((error) => {
-          console.error("Failed to get reports", error);
-        });
-    }
+    getReports()
+      .then((data) => {
+        setReports(data);
+      })
+      .catch((error) => {
+        console.error("Failed to get reports", error);
+      });
   }, []);
 
   const totalProjects = reports.length;
@@ -41,7 +46,13 @@ export function Dashboard() {
   const pendingReviews = reports.filter(report => report.status === 'pending').length;
   const flaggedIssues = reports.filter(report => report.status === 'flagged').length;
 
-  const activityData = reports.reduce((acc, report) => {
+  interface ActivityItem {
+    date: string;
+    submissions: number;
+    verified: number;
+  }
+
+  const activityData = reports.reduce<ActivityItem[]>((acc, report) => {
     const date = new Date(report.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     const existing = acc.find(item => item.date === date);
     if (existing) {

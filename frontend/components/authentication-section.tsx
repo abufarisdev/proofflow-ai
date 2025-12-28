@@ -4,23 +4,23 @@
 import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Github, Shield, LinkIcon, Mail } from "lucide-react"
-import { 
-  getGithubAuthUrl, 
-  exchangeCodeForToken, 
-  getGithubToken, 
-  logout, 
-  signUpWithEmailAndPassword, 
-  signInWithEmailAndPassword 
+import {
+  getGithubAuthUrl,
+  exchangeCodeForToken,
+  getGithubToken,
+  logout,
+  signUpWithEmailAndPassword,
+  signInWithEmailAndPassword
 } from "@/services/authService"
 
 export function AuthenticationSection() {
   const [githubConnected, setGithubConnected] = useState(false)
   const [showOAuthInfo, setShowOAuthInfo] = useState(false)
-  const [githubUser, setGithubUser] = useState(null);
+  const [githubUser, setGithubUser] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const token = getGithubToken();
@@ -61,8 +61,8 @@ export function AuthenticationSection() {
       }
     }
   };
-  
-  const handleEmailAuth = async (e) => {
+
+  const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
@@ -73,7 +73,7 @@ export function AuthenticationSection() {
         await signInWithEmailAndPassword(email, password);
       }
       // Handle successful login/signup (e.g., redirect)
-    } catch (error) {
+    } catch (error: any) {
       setError(error.message);
     }
   };
@@ -107,9 +107,8 @@ export function AuthenticationSection() {
             </div>
             <button
               onClick={handleGithubAction}
-              className={`px-6 py-2 rounded-lg font-medium transition-opacity hover:opacity-90 ${
-                githubConnected ? "bg-destructive text-destructive-foreground" : "bg-primary text-primary-foreground"
-              }`}
+              className={`px-6 py-2 rounded-lg font-medium transition-opacity hover:opacity-90 ${githubConnected ? "bg-destructive text-destructive-foreground" : "bg-primary text-primary-foreground"
+                }`}
             >
               {githubConnected ? "Revoke" : "Connect GitHub"}
             </button>

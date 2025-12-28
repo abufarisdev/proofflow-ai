@@ -20,7 +20,6 @@ import {
 } from "recharts"
 import { Download, Filter, ChevronDown } from "lucide-react"
 import { getReport } from "@/services/reportService"
-import { getGithubToken } from "@/services/authService"
 
 interface Report {
   name: string;
@@ -44,12 +43,11 @@ export function ReportView() {
   const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
-    const token = getGithubToken();
     const urlParams = new URLSearchParams(window.location.search);
     const id = urlParams.get("id");
 
-    if (token && id) {
-      getReport(token, id)
+    if (id) {
+      getReport(id)
         .then((data) => {
           setReport(data);
         })
@@ -185,10 +183,10 @@ export function ReportView() {
               <div
                 key={issue.id}
                 className={`p-4 rounded-lg border-l-4 ${issue.severity === "high"
-                    ? "border-l-destructive bg-destructive/10"
-                    : issue.severity === "medium"
-                      ? "border-l-chart-2 bg-chart-2/10"
-                      : "border-l-chart-4 bg-chart-4/10"
+                  ? "border-l-destructive bg-destructive/10"
+                  : issue.severity === "medium"
+                    ? "border-l-chart-2 bg-chart-2/10"
+                    : "border-l-chart-4 bg-chart-4/10"
                   }`}
               >
                 <p className="font-medium text-foreground text-sm">{issue.title}</p>
