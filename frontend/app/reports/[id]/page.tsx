@@ -11,7 +11,7 @@ type Props = {
 export default function ReportDetailPage({ params }: Props) {
     return (
         <AuthGuard requireAuth={true}>
-            <div className="flex h-screen">
+            <div className="flex h-screen flex-col md:flex-row">
                 <Sidebar />
                 <main className="flex-1 overflow-auto">
                     <ReportView reportId={params.id} />

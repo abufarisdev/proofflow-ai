@@ -128,7 +128,7 @@ export function ReportView({ reportId }: ReportViewProps) {
         <h1 className="text-3xl font-bold text-foreground mb-4">Project Analysis Reports</h1>
 
         {/* Project Selector */}
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
           <div className="relative">
             <button className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-lg text-foreground hover:bg-muted transition-colors">
               <span>{report.name}</span>

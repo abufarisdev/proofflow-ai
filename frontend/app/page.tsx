@@ -35,7 +35,7 @@ export default function Home() {
   }
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen flex-col md:flex-row">
       <Sidebar />
       <main className="flex-1 overflow-auto">
         <Dashboard />
