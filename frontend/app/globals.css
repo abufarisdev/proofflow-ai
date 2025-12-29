@@ -214,3 +214,21 @@
 .auth-container.right-panel-active .overlay-right {
   transform: translateX(20%);
 }
+/* ========== FIX OVERLAY BLOCKING CLICKS ========== */
+.auth-container .overlay-container {
+  pointer-events: none;
+}
+
+.auth-container .overlay {
+  pointer-events: none;
+}
+
+/* Allow the overlay buttons to still work */
+.auth-container .overlay-panel button {
+  pointer-events: auto;
+}
+.social {
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 9999 !important;
+}

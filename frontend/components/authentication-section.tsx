@@ -3,8 +3,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { signInWithEmailAndPassword, signUpWithEmailAndPassword, getGithubAuthUrl } from '@/services/authService';
 import { Button } from "@/components/ui/button";
+import { signInWithEmailAndPassword, signUpWithEmailAndPassword } from '@/services/authService';
+import { GithubAuthProvider, signInWithPopup } from "firebase/auth";
+import { auth } from "@/firebase";
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -47,16 +50,18 @@ export function AuthenticationSection({ isSignUp: initialIsSignUp = false }) {
       setError(errorMessage);
     }
   };
+const handleGithubLogin = async () => {
+  try {
+    const provider = new GithubAuthProvider();
+    await signInWithPopup(auth, provider);
+    router.push("/");
+  } catch (error) {
+    console.error("GitHub login failed:", error);
+    setError("GitHub login failed");
+  }
+};
 
-  const handleGithubLogin = async () => {
-    try {
-      const url = await getGithubAuthUrl();
-      window.location.href = url;
-    } catch (error) {
-      console.error('GitHub login error:', error);
-      setError('Failed to initiate GitHub login');
-    }
-  };
+
 
   const handleToggle = () => setIsSignUp(!isSignUp);
 

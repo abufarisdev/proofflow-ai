@@ -18,7 +18,7 @@ import {
 } from "recharts";
 import { TrendingUp, AlertCircle, CheckCircle, Clock } from "lucide-react";
 import { getReports } from "@/services/reportService";
-import { getGithubToken } from "@/services/authService";
+
 import { useState, useEffect } from "react";
 import { Report } from "@/types";
 
@@ -27,33 +27,27 @@ export function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = getGithubToken();
-    if (token) {
-      getReports()
-        .then((response: any) => {
-          if (response?.data && Array.isArray(response.data)) {
-            const mappedReports: Report[] = response.data.map((item: any) => ({
-              id: item._id,
-              name: item.projectId?.repoName || 'Unknown Project',
-              repoUrl: item.projectId?.repoUrl || '',
-              status: item.projectId?.status || 'pending',
-              confidence: item.confidenceScore || 0,
-              createdAt: item.createdAt,
-              action: 'Report Generated'
-            }));
-            setReports(mappedReports);
-          }
-        })
-        .catch((error) => {
-          console.error("Failed to get reports", error);
-        })
-        .finally(() => {
-          setLoading(false);
-        });
-    } else {
-      setLoading(false);
-    }
-  }, []);
+  getReports()
+    .then((response: any) => {
+      if (response?.data && Array.isArray(response.data)) {
+        const mappedReports = response.data.map((item: any) => ({
+          id: item._id,
+          name: item.projectId?.repoName || 'Unknown Project',
+          repoUrl: item.projectId?.repoUrl || '',
+          status: item.projectId?.status || 'pending',
+          confidence: item.confidenceScore || 0,
+          createdAt: item.createdAt,
+          action: 'Report Generated'
+        }));
+        setReports(mappedReports);
+      }
+    })
+    .catch((error) => {
+      console.error("Failed to get reports", error);
+    })
+    .finally(() => setLoading(false));
+}, []);
+
 
   const totalProjects = reports.length;
   const verifiedProjects = reports.filter(report => report.status === 'verified').length;

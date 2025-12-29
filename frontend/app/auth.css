@@ -163,6 +163,11 @@ input::placeholder {
   overflow: hidden;
   transition: transform 0.6s ease-in-out;
   z-index: 100;
+  pointer-events: none;
+}
+
+.overlay-panel button {
+  pointer-events: auto;
 }
 
 .container.right-panel-active .overlay-container {
@@ -268,4 +273,15 @@ input::placeholder {
 
 .social:hover {
   background-color: hsl(var(--muted));
+}
+.auth-container .overlay-container {
+  pointer-events: none;
+}
+
+.auth-container .overlay-panel button {
+  pointer-events: auto;
+}
+
+.auth-container .overlay {
+  pointer-events: none;
 }

@@ -7,33 +7,6 @@ import {
   UserCredential,
 } from "firebase/auth";
 
-export const getGithubAuthUrl = async () => {
-  try {
-    const response = await api.get("/auth/github");
-    return response.data.url;
-  } catch (error) {
-    console.error("Error getting GitHub auth URL", error);
-    throw error;
-  }
-};
-
-export const exchangeCodeForToken = async (code: string) => {
-  try {
-    const response = await api.post("/auth/github/callback", { code });
-    if (response.data.access_token) {
-      localStorage.setItem("github_token", response.data.access_token);
-    }
-    return response.data;
-  } catch (error) {
-    console.error("Error exchanging code for token", error);
-    throw error;
-  }
-};
-
-export const getGithubToken = () => {
-  return localStorage.getItem("github_token");
-};
-
 export const signUpWithEmailAndPassword = async (email: string, password: string): Promise<UserCredential['user']> => {
   try {
     const userCredential = await firebaseCreateUserWithEmailAndPassword(auth, email, password);
