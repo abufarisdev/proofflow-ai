@@ -125,50 +125,50 @@ export function Dashboard() {
               </>
             ) : (
               <>
-                <Card className="p-6 bg-card border-border hover:shadow-lg transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 delay-0 fill-mode-backwards">
+                <Card className="p-6 bg-white/50 backdrop-blur-md border-white/20 shadow-sm hover:shadow-lg hover:scale-[1.02] transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 delay-0 fill-mode-backwards group">
                   <div className="flex items-start justify-between">
                     <div>
-                      <p className="text-sm text-muted-custom font-medium mb-1">Total Projects</p>
-                      <p className="text-3xl font-bold text-foreground">{totalProjects}</p>
+                      <p className="text-sm text-muted-custom font-medium mb-1 group-hover:text-primary-custom/80 transition-colors">Total Projects</p>
+                      <p className="text-3xl font-bold text-foreground animate-in fade-in slide-in-from-bottom-2 duration-500">{totalProjects}</p>
                     </div>
-                    <div className="p-2 bg-primary-custom/10 rounded-full">
+                    <div className="p-2 bg-primary-custom/10 rounded-full group-hover:scale-110 transition-transform duration-300">
                       <TrendingUp className="w-5 h-5 text-primary-custom" />
                     </div>
                   </div>
                 </Card>
 
-                <Card className="p-6 bg-card border-border hover:shadow-lg transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 delay-100 fill-mode-backwards">
+                <Card className="p-6 bg-white/50 backdrop-blur-md border-white/20 shadow-sm hover:shadow-lg hover:scale-[1.02] transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 delay-100 fill-mode-backwards group">
                   <div className="flex items-start justify-between">
                     <div>
-                      <p className="text-sm text-muted-custom font-medium mb-1">Verified Projects</p>
-                      <p className="text-3xl font-bold text-foreground">{verifiedProjects}</p>
+                      <p className="text-sm text-muted-custom font-medium mb-1 group-hover:text-secondary-custom/80 transition-colors">Verified Projects</p>
+                      <p className="text-3xl font-bold text-foreground animate-in fade-in slide-in-from-bottom-2 duration-500 delay-75">{verifiedProjects}</p>
                     </div>
-                    <div className="p-2 bg-secondary-custom/10 rounded-full">
+                    <div className="p-2 bg-secondary-custom/10 rounded-full group-hover:scale-110 transition-transform duration-300">
                       <CheckCircle className="w-5 h-5 text-secondary-custom" />
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground mt-4">{totalProjects > 0 ? ((verifiedProjects / totalProjects) * 100).toFixed(1) : 0}% success rate</p>
                 </Card>
 
-                <Card className="p-6 bg-card border-border hover:shadow-lg transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 delay-200 fill-mode-backwards">
+                <Card className="p-6 bg-white/50 backdrop-blur-md border-white/20 shadow-sm hover:shadow-lg hover:scale-[1.02] transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 delay-200 fill-mode-backwards group">
                   <div className="flex items-start justify-between">
                     <div>
-                      <p className="text-sm text-muted-custom font-medium mb-1">Pending Reviews</p>
-                      <p className="text-3xl font-bold text-foreground">{pendingReviews}</p>
+                      <p className="text-sm text-muted-custom font-medium mb-1 group-hover:text-[#989788]/80 transition-colors">Pending Reviews</p>
+                      <p className="text-3xl font-bold text-foreground animate-in fade-in slide-in-from-bottom-2 duration-500 delay-150">{pendingReviews}</p>
                     </div>
-                    <div className="p-2 bg-[#989788]/20 rounded-full">
+                    <div className="p-2 bg-[#989788]/20 rounded-full group-hover:scale-110 transition-transform duration-300">
                       <Clock className="w-5 h-5 text-[#989788]" />
                     </div>
                   </div>
                 </Card>
 
-                <Card className="p-6 bg-card border-border hover:shadow-lg transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 delay-300 fill-mode-backwards">
+                <Card className="p-6 bg-white/50 backdrop-blur-md border-white/20 shadow-sm hover:shadow-lg hover:scale-[1.02] transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 delay-300 fill-mode-backwards group">
                   <div className="flex items-start justify-between">
                     <div>
-                      <p className="text-sm text-muted-custom font-medium mb-1">Flagged Issues</p>
-                      <p className="text-3xl font-bold text-foreground">{flaggedIssues}</p>
+                      <p className="text-sm text-muted-custom font-medium mb-1 group-hover:text-destructive/80 transition-colors">Flagged Issues</p>
+                      <p className="text-3xl font-bold text-foreground animate-in fade-in slide-in-from-bottom-2 duration-500 delay-200">{flaggedIssues}</p>
                     </div>
-                    <div className="p-2 bg-destructive/10 rounded-full">
+                    <div className="p-2 bg-destructive/10 rounded-full group-hover:scale-110 transition-transform duration-300">
                       <AlertCircle className="w-5 h-5 text-destructive" />
                     </div>
                   </div>
