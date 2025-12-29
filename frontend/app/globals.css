@@ -1,6 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 @layer base {
   :root {
@@ -61,10 +59,11 @@
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
   }
 }
 
@@ -98,7 +97,7 @@
 .auth-container {
   background-color: white;
   border-radius: 0.75rem;
-  box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
   position: relative;
   overflow: hidden;
   width: 768px;
@@ -138,12 +137,14 @@
 }
 
 @keyframes show {
-  0%, 49.99% {
+  0%,
+  49.99% {
     opacity: 0;
     z-index: 1;
   }
-  
-  50%, 100% {
+
+  50%,
+  100% {
     opacity: 1;
     z-index: 5;
   }
@@ -160,7 +161,7 @@
   z-index: 100;
 }
 
-.auth-container.right-panel-active .overlay-container{
+.auth-container.right-panel-active .overlay-container {
   transform: translateX(-100%);
 }
 
@@ -169,7 +170,7 @@
   background-repeat: no-repeat;
   background-size: cover;
   background-position: 0 0;
-  color: #FFFFFF;
+  color: #ffffff;
   position: relative;
   left: -100%;
   height: 100%;
