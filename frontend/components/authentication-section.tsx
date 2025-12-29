@@ -7,33 +7,41 @@ import { Button } from "@/components/ui/button";
 import { signInWithEmailAndPassword, signUpWithEmailAndPassword } from '@/services/authService';
 import { GithubAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth } from "@/firebase";
-
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Github, Mail, Lock, AlertCircle } from 'lucide-react';
 
 export function AuthenticationSection({ isSignUp: initialIsSignUp = false }) {
-  const [isSignUp, setIsSignUp] = useState(initialIsSignUp);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleAuth = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleAuth = async (e: React.FormEvent<HTMLFormElement>, type: 'signin' | 'signup') => {
     e.preventDefault();
     setError(null);
-    const email = e.currentTarget.email.value;
-    const password = e.currentTarget.password.value;
+    setLoading(true);
+
+    // Use type assertion to access elements safely
+    const form = e.currentTarget;
+    const emailInput = form.elements.namedItem('email') as HTMLInputElement;
+    const passwordInput = form.elements.namedItem('password') as HTMLInputElement;
+
+    const email = emailInput.value;
+    const password = passwordInput.value;
 
     try {
-      if (isSignUp) {
+      if (type === 'signup') {
         await signUpWithEmailAndPassword(email, password);
       } else {
         await signInWithEmailAndPassword(email, password);
       }
       router.push('/');
-    } catch (error: unknown) {
+    } catch (error: any) { // Type 'any' for Firebase error object flexibility
       let errorMessage = 'An unexpected error occurred.';
-      if (error && typeof error === 'object' && 'code' in error) {
-        const firebaseError = error as { code?: string; message?: string };
-        switch (firebaseError.code) {
+      if (error.code) {
+        switch (error.code) {
           case 'auth/email-already-in-use':
             errorMessage = 'This email is already in use.';
             break;
@@ -43,113 +51,175 @@ export function AuthenticationSection({ isSignUp: initialIsSignUp = false }) {
           case 'auth/user-not-found':
             errorMessage = 'No user found with this email.';
             break;
+          case 'auth/invalid-credential':
+            errorMessage = 'Invalid credentials provided.';
+            break;
           default:
-            errorMessage = firebaseError.message || errorMessage;
+            errorMessage = error.message || errorMessage;
         }
       }
       setError(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
-const handleGithubLogin = async () => {
-  try {
-    const provider = new GithubAuthProvider();
-    await signInWithPopup(auth, provider);
-    router.push("/");
-  } catch (error) {
-    console.error("GitHub login failed:", error);
-    setError("GitHub login failed");
-  }
-};
 
-
-
-  const handleToggle = () => setIsSignUp(!isSignUp);
-
-  const AuthForm = ({ isSignUp, onSubmit, error, onToggle, onGithubLogin }: {
-    isSignUp: boolean;
-    onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
-    error: string | null;
-    onToggle: () => void;
-    onGithubLogin: () => void;
-  }) => (
-    <div className={`form-container ${isSignUp ? 'sign-up-container' : 'sign-in-container'} text-black transition-all ease-in-out duration-700`}>
-      <form onSubmit={onSubmit} className="flex flex-col items-center justify-center h-full px-12 text-center bg-white dark:bg-card transition-all ease-in-out duration-700">
-        <h1 className="text-2xl font-bold mb-4 text-foreground">{isSignUp ? 'Create Account' : 'Sign In'}</h1>
-        <div className="w-full space-y-4">
-          <div className="space-y-1 text-left">
-            <Label htmlFor={`${isSignUp ? 'signup' : 'signin'}-email`}>Email</Label>
-            <Input className='border border-[#00000050]' id={`${isSignUp ? 'signup' : 'signin'}-email`} type="email" placeholder="Email" name="email" />
-          </div>
-          <div className="space-y-1 text-left">
-            <Label htmlFor={`${isSignUp ? 'signup' : 'signin'}-password`}>Password</Label>
-            <Input className='border border-[#00000050]' id={`${isSignUp ? 'signup' : 'signin'}-password`} type="password" placeholder="Password" name="password" />
-          </div>
-        </div>
-        {error && <p className="text-destructive text-sm mt-2">{error}</p>}
-        <Button type="submit" className="mt-6 w-full border border-[#00000050] hover:bg-[#00000010]">{isSignUp ? 'Sign Up' : 'Sign In'}</Button>
-        <p className="sm:hidden mt-4 text-sm">
-          {isSignUp ? 'Already have an account? ' : 'Don\'t have an account? '}
-          <button type="button" className="text-blue-700 font-bold" onClick={onToggle}>
-            {isSignUp ? 'Sign In' : 'Sign Up'}
-          </button>
-        </p>
-        <div className="relative w-full mb-4">
-          <div className="relative flex justify-center text-xs uppercase p-2">
-            <span className="bg-background px-2 py-4 text-muted-foreground">Or continue with</span>
-          </div>
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-b border-muted" />
-          </div>
-        <div className="social-container mb-4">
-          <button type="button" onClick={onGithubLogin} className="social">
-            <svg width="25" height="25" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-            </svg>
-          </button>
-        </div>
-        </div>
-      </form>
-    </div>
-  );
-
-  const Overlay = ({ onSignInClick, onSignUpClick }: {
-    onSignInClick: () => void;
-    onSignUpClick: () => void;
-  }) => (
-    <div className="overlay-container transition-all ease-in-out duration-700">
-      <div className="overlay transition-all ease-in-out duration-700">
-        <div className="overlay-panel overlay-left">
-          <h1 className="text-2xl font-bold">Welcome Back!</h1>
-          <p className="mt-4 px-8 text-sm opacity-90">To keep connected with us please login with your personal info</p>
-          <Button variant="outline" className="mt-8 border-white text-white hover:bg-[#00000049] hover:text-primary transition-all" onClick={onSignInClick}>Sign In</Button>
-        </div>
-        <div className="overlay-panel overlay-right">
-          <h1 className="text-2xl font-bold">Hello, Friend!</h1>
-          <p className="mt-4 px-8 text-sm opacity-90">Enter your personal details and start your journey with us</p>
-          <Button variant="outline" className="mt-8 border-white text-white hover:bg-[#00000049] hover:text-primary transition-all" onClick={onSignUpClick}>Sign Up</Button>
-        </div>
-      </div>
-    </div>
-  );
+  const handleGithubLogin = async () => {
+    try {
+      const provider = new GithubAuthProvider();
+      await signInWithPopup(auth, provider);
+      router.push("/");
+    } catch (error) {
+      console.error("GitHub login failed:", error);
+      setError("GitHub login failed. Please try again.");
+    }
+  };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-muted/30 p-4 transition-all ease-in-out duration-700">
-      <div className={`auth-container shadow-2xl ${isSignUp ? 'right-panel-active' : ''}`}>
-        <AuthForm 
-          isSignUp={true} 
-          onSubmit={handleAuth} 
-          error={isSignUp ? error : null} 
-          onToggle={handleToggle}
-          onGithubLogin={handleGithubLogin}
-        />
-        <AuthForm 
-          isSignUp={false} 
-          onSubmit={handleAuth} 
-          error={!isSignUp ? error : null} 
-          onToggle={handleToggle}
-          onGithubLogin={handleGithubLogin}
-        />
-        <Overlay onSignInClick={() => setIsSignUp(false)} onSignUpClick={() => setIsSignUp(true)} />
+    <div className="flex items-center justify-center min-h-screen bg-muted/20 p-4">
+      <div className="w-full max-w-md animate-in fade-in zoom-in-95 duration-500">
+        <div className="mb-8 text-center space-y-2">
+          <div className="w-16 h-16 bg-gradient-to-br from-[#51344D] to-[#6F5060] rounded-2xl flex items-center justify-center mx-auto shadow-lg mb-4">
+            <span className="text-3xl font-bold text-white">P</span>
+          </div>
+          <h1 className="text-3xl font-bold text-[#51344D]">ProofFlow AI</h1>
+          <p className="text-[#989788] text-sm">Verify project authenticity with confidence</p>
+        </div>
+
+        <Tabs defaultValue={initialIsSignUp ? "signup" : "signin"} className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsTrigger value="signin">Sign In</TabsTrigger>
+            <TabsTrigger value="signup">Sign Up</TabsTrigger>
+          </TabsList>
+
+          {/* SIGN IN TAB */}
+          <TabsContent value="signin">
+            <Card className="border-border shadow-lg">
+              <CardHeader>
+                <CardTitle>Welcome back</CardTitle>
+                <CardDescription>
+                  Enter your credentials to access your dashboard
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <form id="signin-form" onSubmit={(e) => handleAuth(e, 'signin')}>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="signin-email">Email</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input id="signin-email" name="email" type="email" placeholder="m@example.com" required className="pl-10" />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="signin-password">Password</Label>
+                      </div>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input id="signin-password" name="password" type="password" required className="pl-10" />
+                      </div>
+                    </div>
+
+                    {error && (
+                      <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 p-3 rounded-md">
+                        <AlertCircle className="h-4 w-4" />
+                        <span>{error}</span>
+                      </div>
+                    )}
+                  </div>
+                </form>
+              </CardContent>
+              <CardFooter className="flex flex-col gap-4">
+                <Button type="submit" form="signin-form" className="w-full bg-[#51344D] hover:bg-[#51344D]/90" disabled={loading}>
+                  {loading ? 'Signing in...' : 'Sign In'}
+                </Button>
+
+                <div className="relative w-full">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">
+                      Or continue with
+                    </span>
+                  </div>
+                </div>
+
+                <Button variant="outline" type="button" onClick={handleGithubLogin} className="w-full gap-2">
+                  <Github className="h-4 w-4" />
+                  GitHub
+                </Button>
+              </CardFooter>
+            </Card>
+          </TabsContent>
+
+          {/* SIGN UP TAB */}
+          <TabsContent value="signup">
+            <Card className="border-border shadow-lg">
+              <CardHeader>
+                <CardTitle>Create an account</CardTitle>
+                <CardDescription>
+                  Enter your email below to create your account
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <form id="signup-form" onSubmit={(e) => handleAuth(e, 'signup')}>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-email">Email</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input id="signup-email" name="email" type="email" placeholder="m@example.com" required className="pl-10" />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-password">Password</Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input id="signup-password" name="password" type="password" required className="pl-10" />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="confirm-password">Confirm Password</Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input id="confirm-password" name="confirmPassword" type="password" required className="pl-10" />
+                      </div>
+                    </div>
+
+                    {error && (
+                      <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 p-3 rounded-md">
+                        <AlertCircle className="h-4 w-4" />
+                        <span>{error}</span>
+                      </div>
+                    )}
+                  </div>
+                </form>
+              </CardContent>
+              <CardFooter className="flex flex-col gap-4">
+                <Button type="submit" form="signup-form" className="w-full bg-[#51344D] hover:bg-[#51344D]/90" disabled={loading}>
+                  {loading ? 'Creating account...' : 'Create Account'}
+                </Button>
+                <div className="relative w-full">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">
+                      Or continue with
+                    </span>
+                  </div>
+                </div>
+
+                <Button variant="outline" type="button" onClick={handleGithubLogin} className="w-full gap-2">
+                  <Github className="h-4 w-4" />
+                  GitHub
+                </Button>
+              </CardFooter>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
