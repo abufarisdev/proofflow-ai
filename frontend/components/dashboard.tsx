@@ -21,12 +21,21 @@ import { getReports } from "@/services/reportService";
 
 import { useState, useEffect } from "react";
 import { Report } from "@/types";
+import { auth } from "@/firebase";
 
 export function Dashboard() {
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userName, setUserName] = useState<string>("User");
 
   useEffect(() => {
+    // Auth Listener
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        setUserName(user.displayName || user.email?.split('@')[0] || "User");
+      }
+    });
+
     getReports()
       .then((response: any) => {
         if (response?.data && Array.isArray(response.data)) {
@@ -84,7 +93,7 @@ export function Dashboard() {
     <div className="p-4 sm:p-8 bg-background min-h-screen">
       {/* Header */}
       <div className="mb-8 welcome-banner animate-in fade-in slide-in-from-top-4 duration-700">
-        <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Welcome back!</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Welcome back, {userName}!</h1>
         <p className="text-white/80 text-sm sm:text-base">Here's your project authenticity overview.</p>
       </div>
 

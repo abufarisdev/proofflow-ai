@@ -16,20 +16,29 @@ const navItems = [
 
 import { useToast } from "@/components/ui/use-toast"
 
+import { auth } from "@/firebase";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
 export function Sidebar() {
   const pathname = usePathname()
   const { theme, setTheme, resolvedTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState(false)
   const { toast } = useToast()
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
     setMounted(true)
+    const unsubscribe = auth.onAuthStateChanged((u) => {
+      setUser(u);
+    });
+    return () => unsubscribe();
   }, [])
 
   const toggleTheme = () => {
     setTheme(resolvedTheme === "dark" ? "light" : "dark")
   }
+
 
   const handleLogout = async () => {
     await logout()
@@ -109,6 +118,28 @@ export function Sidebar() {
 
       {/* Bottom Actions */}
       <div className="p-4 border-t border-sidebar-border space-y-2">
+
+        {/* User Profile */}
+        {user && (
+          <div className={`flex items-center gap-3 px-3 py-3 mb-2 rounded-xl bg-sidebar-accent/50 ${isCollapsed ? 'justify-center' : ''}`}>
+            <Avatar className="h-9 w-9 border border-sidebar-border">
+              <AvatarImage src={user.photoURL} alt={user.displayName} />
+              <AvatarFallback className="bg-[#51344D] text-white">
+                {user.displayName ? user.displayName.charAt(0).toUpperCase() : user.email?.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+
+            <div className={`flex flex-col overflow-hidden transition-all duration-300 ${isCollapsed ? 'opacity-0 w-0 hidden' : 'opacity-100 flex-1'}`}>
+              <span className="text-sm font-medium text-sidebar-foreground truncate">
+                {user.displayName || "User"}
+              </span>
+              <span className="text-xs text-sidebar-accent-foreground truncate">
+                {user.email}
+              </span>
+            </div>
+          </div>
+        )}
+
         <button
           onClick={toggleTheme}
           className={`group w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sidebar-foreground hover:bg-sidebar-accent transition-all duration-200 ${isCollapsed ? 'justify-center' : ''}`}

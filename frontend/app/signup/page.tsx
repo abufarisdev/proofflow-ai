@@ -1,6 +1,11 @@
 
 import { AuthenticationSection } from "@/components/authentication-section";
+import { AuthGuard } from "@/components/auth-guard";
 
 export default function SignupPage() {
-  return <AuthenticationSection isSignUp={true} />;
+  return (
+    <AuthGuard requireAuth={false}>
+      <AuthenticationSection isSignUp={true} />
+    </AuthGuard>
+  );
 }
