@@ -14,11 +14,14 @@ const navItems = [
   { href: "/settings", label: "Settings", icon: Settings },
 ]
 
+import { useToast } from "@/components/ui/use-toast"
+
 export function Sidebar() {
   const pathname = usePathname()
   const { theme, setTheme, resolvedTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const { toast } = useToast()
 
   useEffect(() => {
     setMounted(true)
@@ -30,6 +33,11 @@ export function Sidebar() {
 
   const handleLogout = async () => {
     await logout()
+    toast({
+      title: "Logged out",
+      description: "You have been successfully logged out.",
+      className: "bg-[#51344D] text-white border-none",
+    })
     window.location.href = "/"
   }
 
@@ -71,8 +79,8 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={`group flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 relative overflow-hidden ${isActive
-                  ? "bg-[#51344D] text-white shadow-md mx-1"
-                  : "text-sidebar-foreground hover:bg-[#989788]/20 hover:translate-x-1"
+                ? "bg-[#51344D] text-white shadow-md mx-1"
+                : "text-sidebar-foreground hover:bg-[#989788]/20 hover:translate-x-1"
                 }`}
             >
               {isActive && (

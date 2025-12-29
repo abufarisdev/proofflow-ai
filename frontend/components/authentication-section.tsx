@@ -13,10 +13,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Github, Mail, Lock, AlertCircle } from 'lucide-react';
 
+import { useToast } from "@/components/ui/use-toast";
+
 export function AuthenticationSection({ isSignUp: initialIsSignUp = false }) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { toast } = useToast();
 
   const handleAuth = async (e: React.FormEvent<HTMLFormElement>, type: 'signin' | 'signup') => {
     e.preventDefault();
@@ -34,8 +37,20 @@ export function AuthenticationSection({ isSignUp: initialIsSignUp = false }) {
     try {
       if (type === 'signup') {
         await signUpWithEmailAndPassword(email, password);
+        toast({
+          title: "Account created successfully",
+          description: "Welcome to ProofFlow AI!",
+          variant: "default",
+          className: "bg-[#51344D] text-white border-none",
+        });
       } else {
         await signInWithEmailAndPassword(email, password);
+        toast({
+          title: "Welcome back!",
+          description: "You have signed in successfully.",
+          variant: "default",
+          className: "bg-[#51344D] text-white border-none",
+        });
       }
       router.push('/');
     } catch (error: any) { // Type 'any' for Firebase error object flexibility
@@ -59,6 +74,11 @@ export function AuthenticationSection({ isSignUp: initialIsSignUp = false }) {
         }
       }
       setError(errorMessage);
+      toast({
+        title: "Authentication Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
