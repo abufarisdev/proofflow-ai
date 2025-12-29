@@ -28,6 +28,14 @@ const userSchema = new mongoose.Schema(
             type: String,
             default: "",
         },
+        avatarUrl: {
+            type: String,
+            default: "",
+        },
+        githubUsername: {
+            type: String,
+            default: "",
+        },
     },
     {
         timestamps: true,
