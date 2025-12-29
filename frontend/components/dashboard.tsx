@@ -92,8 +92,8 @@ export function Dashboard() {
   return (
     <div className="p-4 sm:p-8 bg-background min-h-screen">
       {/* Header */}
-      <div className="mb-8 welcome-banner animate-in fade-in slide-in-from-top-4 duration-700">
-        <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Welcome back, {userName}!</h1>
+      <div className="mb-8 p-8 rounded-xl bg-gradient-to-br from-[#51344D] to-[#6F5060] text-white shadow-md animate-in fade-in slide-in-from-top-4 duration-700">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-2">Welcome back, {userName}!</h1>
         <p className="text-white/80 text-sm sm:text-base">Here's your project authenticity overview.</p>
       </div>
 
