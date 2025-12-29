@@ -39,13 +39,20 @@ interface Report {
   recommendations: { title: string; description: string }[];
 }
 
-export function ReportView() {
+interface ReportViewProps {
+  reportId?: string;
+}
+
+export function ReportView({ reportId }: ReportViewProps) {
   const [report, setReport] = useState<Report | null>(null);
   const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const id = urlParams.get("id");
+    let id = reportId;
+    if (!id) {
+      const urlParams = new URLSearchParams(window.location.search);
+      id = urlParams.get("id") || undefined;
+    }
 
     if (id) {
       getReport(id)
