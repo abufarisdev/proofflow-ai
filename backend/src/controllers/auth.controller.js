@@ -1,6 +1,6 @@
 import axios from "axios";
 import dotenv from "dotenv";
-import admin from "../config/firebase.js";
+import {admin} from "../config/firebase.js";
 
 dotenv.config();
 

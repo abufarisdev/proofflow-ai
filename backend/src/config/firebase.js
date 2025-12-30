@@ -1,8 +1,10 @@
 import admin from "firebase-admin";
 import { createRequire } from "module";
+
 const require = createRequire(import.meta.url);
 
 let adminInstance;
+let db;
 
 try {
   const serviceAccount = require("../../firebaseServiceKey.json");
@@ -11,12 +13,15 @@ try {
     credential: admin.credential.cert(serviceAccount),
   });
 
-  console.log("🔥 Firebase Admin Initialized");
   adminInstance = admin;
+  db = admin.firestore();
+
+  console.log("🔥 Firebase Admin Initialized");
 
 } catch (error) {
-  console.error("❌ Error initializing Firebase Admin SDK:", error);
-  adminInstance = null; // IMPORTANT: no mock in real mode
+  console.error("❌ Firebase Admin Init Failed:", error);
+  adminInstance = null;
+  db = null;
 }
 
-export default adminInstance;
+export { adminInstance as admin, db };
