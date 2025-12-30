@@ -100,7 +100,7 @@ export function PreferencesSection() {
                 </div>
                 <button
                   onClick={() => handleNotificationChange(notification.id as keyof typeof notifications)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors border border-gray-300 ${
                     notifications[notification.id as keyof typeof notifications] ? "bg-primary" : "bg-border"
                   }`}
                 >

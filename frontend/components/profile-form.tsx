@@ -129,9 +129,9 @@ export function ProfileForm({ isEditing, setIsEditing }: ProfileFormProps) {
       )}
 
       {loading ? (
-        <div className="bg-white/50 backdrop-blur-md border border-white/20 rounded-xl shadow-sm overflow-hidden p-8 animate-pulse">
+        <div className="text-black bg-white/50 backdrop-blur-md border border-white/20 rounded-xl shadow-sm overflow-hidden p-8 animate-pulse">
           <div className="flex flex-col md:flex-row gap-8 mb-8 pb-8 border-b border-white/10">
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               <Skeleton className="w-32 h-32 rounded-full bg-[#989788]/20" />
             </div>
             <div className="flex-1 space-y-4">
@@ -146,12 +146,12 @@ export function ProfileForm({ isEditing, setIsEditing }: ProfileFormProps) {
         </div>
       ) : (
         /* Profile Card */
-        <div className="bg-white/50 backdrop-blur-md border border-white/20 rounded-xl shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="text-black bg-white/50 backdrop-blur-md border border-white/20 rounded-xl shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="p-8">
             {/* Header with Avatar and Info */}
             <div className="flex flex-col md:flex-row gap-8 mb-8 pb-8 border-b border-black/5">
               {/* Avatar */}
-              <div className="flex-shrink-0 relative group">
+              <div className="shrink-0 relative group">
                 <div
                   onClick={handleAvatarClick}
                   className={`w-32 h-32 rounded-full flex items-center justify-center overflow-hidden border-4 border-white shadow-md transition-all ${isEditing ? 'cursor-pointer hover:opacity-90 ring-4 ring-[#51344D]/20' : ''}`}
@@ -160,7 +160,7 @@ export function ProfileForm({ isEditing, setIsEditing }: ProfileFormProps) {
                   }}
                 >
                   {!editFormData.avatarUrl && (
-                    <span className="text-4xl font-bold text-white shadow-sm">
+                    <span className="text-4xl font-bold text-black shadow-sm">
                       {formData.displayName.substring(0, 2).toUpperCase()}
                     </span>
                   )}
@@ -185,7 +185,7 @@ export function ProfileForm({ isEditing, setIsEditing }: ProfileFormProps) {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
                   <div>
                     <h2 className="text-3xl font-bold text-[#51344D] mb-1">{formData.displayName}</h2>
-                    <div className="flex items-center gap-4 text-[#989788] text-sm">
+                    <div className="flex items-center gap-4 text-[#2d2c2a] text-sm">
                       <span className="flex items-center gap-1.5">
                         <Mail size={14} />
                         {formData.email}
@@ -344,7 +344,7 @@ export function ProfileForm({ isEditing, setIsEditing }: ProfileFormProps) {
                 <div className="flex gap-3 pt-4 border-t border-black/5 justify-end">
                   <button
                     onClick={handleCancel}
-                    className="px-6 py-2 bg-transparent text-gray-600 rounded-lg hover:bg-gray-100 transition-colors font-medium"
+                    className="px-6 py-2 bg-transparent text-gray-600 rounded-lg border border-gray-600 hover:bg-gray-600 hover:text-gray-100 transition-colors font-medium"
                   >
                     Cancel
                   </button>
