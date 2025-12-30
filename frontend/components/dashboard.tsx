@@ -92,7 +92,7 @@ export function Dashboard() {
   return (
     <div className="p-4 sm:p-8 bg-background min-h-screen">
       {/* Header */}
-      <div className="mb-8 p-8 rounded-xl bg-gradient-to-br from-[#51344D] to-[#6F5060] text-white shadow-md animate-in fade-in slide-in-from-top-4 duration-700">
+      <div className="mb-8 p-8 rounded-xl bg-linear-to-br from-[#51344D] to-[#6F5060] text-white shadow-md animate-in fade-in slide-in-from-top-4 duration-700">
         <h1 className="text-2xl sm:text-3xl font-bold mb-2">Welcome back, {userName}!</h1>
         <p className="text-white/80 text-sm sm:text-base">Here's your project authenticity overview.</p>
       </div>
@@ -190,7 +190,7 @@ export function Dashboard() {
           {/* Charts Row */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             {/* Activity Chart */}
-            <Card className="col-span-1 lg:col-span-2 p-6 bg-card border-border h-[400px] animate-in fade-in slide-in-from-bottom-8 duration-700 flex flex-col">
+            <Card className="col-span-1 lg:col-span-2 p-6 bg-card border-border h-100 animate-in fade-in slide-in-from-bottom-8 duration-700 flex flex-col">
               <h2 className="text-lg font-semibold text-foreground mb-6">Weekly Activity</h2>
               {loading ? (
                 <div className="w-full flex-1 flex items-end gap-4 justify-between px-4 pb-4">
@@ -224,11 +224,11 @@ export function Dashboard() {
             </Card>
 
             {/* Confidence Distribution */}
-            <Card className="p-6 bg-card border-border h-[400px] animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100 flex flex-col">
+            <Card className="p-6 bg-card border-border h-100 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100 flex flex-col">
               <h2 className="text-lg font-semibold text-foreground mb-6">Confidence Levels</h2>
               {loading ? (
                 <div className="w-full flex-1 flex items-center justify-center">
-                  <Skeleton className="w-[200px] h-[200px] rounded-full bg-muted-custom/20" />
+                  <Skeleton className="w-50 h-50 rounded-full bg-muted-custom/20" />
                 </div>
               ) : (
                 <div className="flex-1 w-full min-h-0">

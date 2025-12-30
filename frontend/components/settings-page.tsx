@@ -122,10 +122,10 @@ export function SettingsPage() {
                       {item.enabled !== undefined ? (
                         <button
                           onClick={() => handleToggle(sectionIndex, itemIndex)}
-                          className={`w-12 h-6 rounded-full transition-colors ${item.enabled ? "bg-chart-1" : "bg-border"}`}
+                          className={`w-12 h-6 rounded-full transition-colors border border-gray-500 ${item.enabled ? "bg-chart-1" : "bg-border"}`}
                         >
                           <div
-                            className={`w-5 h-5 rounded-full bg-white transition-transform ${item.enabled ? "translate-x-6" : "translate-x-0.5"} mt-0.5`}
+                            className={`w-5 h-5 rounded-full  bg-white transition-transform ${item.enabled ? "translate-x-6" : "translate-x-0.5"}`}
                           />
                         </button>
                       ) : (
@@ -143,7 +143,7 @@ export function SettingsPage() {
       {/* Danger Zone */}
       <Card className="mt-8 p-6 bg-destructive/5 border border-destructive/30">
         <h3 className="text-lg font-semibold text-destructive mb-4">Danger Zone</h3>
-        <button className="px-6 py-2 bg-destructive text-destructive-foreground rounded-lg hover:opacity-90 transition-opacity font-medium">
+        <button className="px-6 py-3 bg-destructive text-destructive-foreground rounded-lg hover:opacity-90 transition-opacity font-medium bg-red-800">
           Delete Account
         </button>
       </Card>
