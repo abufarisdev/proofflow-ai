@@ -3,91 +3,23 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
-import { signInWithEmailAndPassword, signUpWithEmailAndPassword } from '@/services/authService';
 import { GithubAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth } from "@/firebase";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Github, Mail, Lock, AlertCircle } from 'lucide-react';
-import { useToast } from "@/components/ui/use-toast";
+import { Github, AlertCircle } from 'lucide-react';
 
 export function AuthenticationSection({ isSignUp: initialIsSignUp = false }) {
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { toast } = useToast();
-
-  const handleAuth = async (
-    e: React.FormEvent<HTMLFormElement>,
-    type: 'signin' | 'signup'
-  ) => {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-
-    const form = e.currentTarget;
-    const emailInput = form.elements.namedItem('email') as HTMLInputElement;
-    const passwordInput = form.elements.namedItem('password') as HTMLInputElement;
-
-    const email = emailInput.value;
-    const password = passwordInput.value;
-
-    try {
-      if (type === 'signup') {
-        await signUpWithEmailAndPassword(email, password);
-        toast({
-          title: "Account created successfully",
-          description: "Welcome to ProofFlow AI!",
-          className: "bg-[#51344D] text-white border-none",
-        });
-      } else {
-        await signInWithEmailAndPassword(email, password);
-        toast({
-          title: "Welcome back!",
-          description: "You have signed in successfully.",
-          className: "bg-[#51344D] text-white border-none",
-        });
-      }
-      router.push('/');
-    } catch (error: any) {
-      let errorMessage = 'An unexpected error occurred.';
-      if (error.code) {
-        switch (error.code) {
-          case 'auth/email-already-in-use':
-            errorMessage = 'This email is already in use.';
-            break;
-          case 'auth/wrong-password':
-            errorMessage = 'Incorrect password.';
-            break;
-          case 'auth/user-not-found':
-            errorMessage = 'No user found with this email.';
-            break;
-          case 'auth/invalid-credential':
-            errorMessage = 'Invalid credentials provided.';
-            break;
-          default:
-            errorMessage = error.message || errorMessage;
-        }
-      }
-      setError(errorMessage);
-      toast({
-        title: "Authentication Failed",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleGithubLogin = async () => {
     try {
       const provider = new GithubAuthProvider();
       await signInWithPopup(auth, provider);
       router.push("/");
-    } catch {
+    } catch (err) {
+      console.error(err);
       setError("GitHub login failed. Please try again.");
     }
   };
@@ -98,36 +30,40 @@ export function AuthenticationSection({ isSignUp: initialIsSignUp = false }) {
 
         {/* HEADER */}
         <div className="mb-8 text-center space-y-2">
-          <div className="w-16 h-16 bg-linear-to-br from-[#51344D] to-[#6F5060] rounded-2xl flex items-center justify-center mx-auto shadow-lg mb-4">
+          <div className="w-16 h-16 bg-linear-to-br from-[#51344D] to-[#6F5060] rounded-2xl flex items-center justify-center mx-auto shadow-lg mb-4 animate-pulse-slow">
             <span className="text-3xl font-bold text-white">P</span>
           </div>
-          <h1 className="text-3xl font-bold text-[#51344D]">ProofFlow AI</h1>
-          <p className="text-[#989788] text-sm">
+          <h1 className="text-3xl font-bold text-[#ffffff] animate-slide-up">ProofFlow AI</h1>
+          <p className="text-[#989788] text-sm animate-slide-up animation-delay-100">
             Verify project authenticity with confidence
           </p>
         </div>
 
         <Tabs defaultValue={initialIsSignUp ? "signup" : "signin"} className="w-full">
 
-          {/* TOGGLE STYLE TABS */}
+          {/* TOGGLE TABS */}
           <div className="w-full flex justify-center mb-4">
             <TabsList
               className="
                 flex w-full bg-[#F3F4F6] dark:bg-[#51344D]
                 px-2 py-1 rounded-xl
                 border border-[#F3F4F6] dark:border-[#2c3340]
+                backdrop-blur-sm
               "
             >
               <TabsTrigger
                 value="signin"
                 className="
-                  flex-1 py-1 rounded-lg font-medium transition-all
+                  flex-1 py-1 rounded-lg font-medium transition-all duration-300
                   text-white
                   data-[state=active]:bg-white
                   dark:data-[state=active]:bg-[#1F141E]
                   data-[state=active]:text-black
                   dark:data-[state=active]:text-white
-                  data-[state=active]:shadow
+                  data-[state=active]:shadow-lg
+                  data-[state=active]:scale-105
+                  hover:scale-[1.02] hover:bg-white/10
+                  active:scale-95
                 "
               >
                 Sign In
@@ -136,13 +72,16 @@ export function AuthenticationSection({ isSignUp: initialIsSignUp = false }) {
               <TabsTrigger
                 value="signup"
                 className="
-                  flex-1 py-1 rounded-lg font-medium transition-all
+                  flex-1 py-1 rounded-lg font-medium transition-all duration-300
                   text-white
                   data-[state=active]:bg-white
                   dark:data-[state=active]:bg-[#1F141E]
                   data-[state=active]:text-black
                   dark:data-[state=active]:text-white
-                  data-[state=active]:shadow
+                  data-[state=active]:shadow-lg
+                  data-[state=active]:scale-105
+                  hover:scale-[1.02] hover:bg-white/10
+                  active:scale-95
                 "
               >
                 Sign Up
@@ -152,85 +91,52 @@ export function AuthenticationSection({ isSignUp: initialIsSignUp = false }) {
 
           {/* SIGN IN */}
           <TabsContent value="signin">
-            <Card className="border-border shadow-lg">
-              <CardHeader>
-                <CardTitle>Welcome back</CardTitle>
-                <CardDescription>
-                  Enter your credentials to access your dashboard
+            <Card className="
+              border-border shadow-lg 
+              transition-all duration-300 
+              hover:shadow-2xl hover:shadow-[#51344D]/20 
+              hover:-translate-y-1
+              backdrop-blur-sm bg-white/95 dark:bg-[#1F141E]/95
+              border border-white/10 dark:border-[#51344D]/30
+              group
+            ">
+              <CardHeader className="space-y-2 text-center">
+                <CardTitle className="text-2xl">Welcome back</CardTitle>
+                <CardDescription className="transition-colors duration-300 group-hover:text-[#989788]/80">
+                  Continue to your dashboard using GitHub
                 </CardDescription>
               </CardHeader>
 
-              <CardContent className="space-y-4">
-                <form id="signin-form" onSubmit={(e) => handleAuth(e, 'signin')}>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="signin-email">Email</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="signin-email"
-                          name="email"
-                          type="email"
-                          placeholder="m@example.com"
-                          required
-                          className="pl-10"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="signin-password">Password</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="signin-password"
-                          name="password"
-                          type="password"
-                          required
-                          className="pl-10"
-                        />
-                      </div>
-                    </div>
-
-                    {error && (
-                      <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 p-3 rounded-md">
-                        <AlertCircle className="h-4 w-4" />
-                        <span>{error}</span>
-                      </div>
-                    )}
+              <CardContent className="text-center">
+                {error && (
+                  <div className="flex items-center justify-center gap-2 text-sm text-destructive bg-destructive/10 p-3 rounded-md animate-shake">
+                    <AlertCircle className="h-4 w-4" />
+                    <span>{error}</span>
                   </div>
-                </form>
+                )}
               </CardContent>
 
               <CardFooter className="flex flex-col gap-4">
                 <Button
-                  type="submit"
-                  form="signin-form"
-                  className="w-full bg-[#51344D] hover:bg-[#51344D]/90"
-                  disabled={loading}
-                >
-                  {loading ? 'Signing in...' : 'Sign In'}
-                </Button>
-
-                <div className="relative w-full">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t" />
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">
-                      Or continue with
-                    </span>
-                  </div>
-                </div>
-
-                <Button
                   variant="outline"
                   type="button"
                   onClick={handleGithubLogin}
-                  className="w-full gap-2"
+                  className="
+                    w-full gap-2 
+                    transition-all duration-300 
+                    hover:bg-white hover:text-black 
+                    dark:hover:bg-white dark:hover:text-black
+                    hover:scale-[1.02]
+                    active:scale-95
+                    border-2
+                    hover:border-white/30
+                    dark:hover:border-white/20
+                    hover:shadow-lg hover:shadow-[#51344D]/10
+                    group/button
+                  "
                 >
-                  <Github className="h-4 w-4" />
-                  GitHub
+                  <Github className="h-4 w-4 transition-transform duration-300 group-hover/button:scale-110" />
+                  <span className="transition-all duration-300">Continue with GitHub</span>
                 </Button>
               </CardFooter>
             </Card>
@@ -238,99 +144,52 @@ export function AuthenticationSection({ isSignUp: initialIsSignUp = false }) {
 
           {/* SIGN UP */}
           <TabsContent value="signup">
-            <Card className="border-border shadow-lg">
-              <CardHeader>
-                <CardTitle>Create an account</CardTitle>
-                <CardDescription>
-                  Enter your email below to create your account
+            <Card className="
+              border-border shadow-lg 
+              transition-all duration-300 
+              hover:shadow-2xl hover:shadow-[#51344D]/20 
+              hover:-translate-y-1
+              backdrop-blur-sm bg-white/95 dark:bg-[#1F141E]/95
+              border border-white/10 dark:border-[#51344D]/30
+              group
+            ">
+              <CardHeader className="space-y-2 text-center">
+                <CardTitle className="text-2xl">Create your account</CardTitle>
+                <CardDescription className="transition-colors duration-300 group-hover:text-[#989788]/80">
+                  Sign up instantly using your GitHub account
                 </CardDescription>
               </CardHeader>
 
-              <CardContent className="space-y-4">
-                <form id="signup-form" onSubmit={(e) => handleAuth(e, 'signup')}>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-email">Email</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="signup-email"
-                          name="email"
-                          type="email"
-                          placeholder="m@example.com"
-                          required
-                          className="pl-10"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-password">Password</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="signup-password"
-                          name="password"
-                          type="password"
-                          required
-                          className="pl-10"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="confirm-password">Confirm Password</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="confirm-password"
-                          name="confirmPassword"
-                          type="password"
-                          required
-                          className="pl-10"
-                        />
-                      </div>
-                    </div>
-
-                    {error && (
-                      <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 p-3 rounded-md">
-                        <AlertCircle className="h-4 w-4" />
-                        <span>{error}</span>
-                      </div>
-                    )}
+              <CardContent className="text-center">
+                {error && (
+                  <div className="flex items-center justify-center gap-2 text-sm text-destructive bg-destructive/10 p-3 rounded-md animate-shake">
+                    <AlertCircle className="h-4 w-4" />
+                    <span>{error}</span>
                   </div>
-                </form>
+                )}
               </CardContent>
 
               <CardFooter className="flex flex-col gap-4">
                 <Button
-                  type="submit"
-                  form="signup-form"
-                  className="w-full bg-[#51344D] hover:bg-[#51344D]/90"
-                  disabled={loading}
-                >
-                  {loading ? 'Creating account...' : 'Create Account'}
-                </Button>
-
-                <div className="relative w-full">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t" />
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">
-                      Or continue with
-                    </span>
-                  </div>
-                </div>
-
-                <Button
                   variant="outline"
                   type="button"
                   onClick={handleGithubLogin}
-                  className="w-full gap-2"
+                  className="
+                    w-full gap-2 
+                    transition-all duration-300 
+                    hover:bg-white hover:text-black 
+                    dark:hover:bg-white dark:hover:text-black
+                    hover:scale-[1.02]
+                    active:scale-95
+                    border-2
+                    hover:border-white/30
+                    dark:hover:border-white/20
+                    hover:shadow-lg hover:shadow-[#51344D]/10
+                    group/button
+                  "
                 >
-                  <Github className="h-4 w-4" />
-                  GitHub
+                  <Github className="h-4 w-4 transition-transform duration-300 group-hover/button:scale-110" />
+                  <span className="transition-all duration-300">Sign Up with GitHub</span>
                 </Button>
               </CardFooter>
             </Card>

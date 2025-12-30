@@ -1,83 +1,202 @@
+
 @import "tailwindcss";
+:root {
+  --background: 0 0% 99%;
+  --foreground: 308 25% 18%;
 
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 308 22% 26%;
-    --card: 0 0% 100%;
-    --card-foreground: 308 22% 26%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 308 22% 26%;
+  --card: 0 0% 100%;
+  --card-foreground: 308 25% 18%;
 
-    /* Primary #51344D -> HSL(308, 22%, 26%) */
-    --primary: 308 22% 26%;
-    --primary-foreground: 0 0% 100%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 308 25% 18%;
 
-    /* Secondary #6F5060 -> HSL(329, 16%, 37%) */
-    --secondary: 329 16% 37%;
-    --secondary-foreground: 0 0% 100%;
+  --primary: 286 58% 45%;
+  --primary-foreground: 0 0% 100%;
 
-    /* Muted #989788 -> HSL(57, 6%, 56%) */
-    --muted: 57 6% 56%;
-    --muted-foreground: 308 10% 40%;
+  --secondary: 329 35% 40%;
+  --secondary-foreground: 0 0% 100%;
 
-    --accent: 329 16% 37%;
-    --accent-foreground: 0 0% 100%;
+  --muted: 260 8% 80%;
+  --muted-foreground: 308 20% 30%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 57 6% 85%;
-    --input: 57 6% 85%;
-    --ring: 308 22% 26%;
-    --radius: 0.5rem;
-    --chart-1: 308 22% 26%;
-    --chart-2: 329 16% 37%;
-    --chart-3: 57 6% 56%;
-    --chart-4: 308 15% 45%;
-    --chart-5: 329 10% 55%;
+  --accent: 286 60% 50%;
+  --accent-foreground: 0 0% 100%;
+
+  
+  --destructive: 0 84% 55%;
+  --destructive-foreground: 0 0% 98%;
+
+  --border: 270 15% 86%;
+  --input: 270 15% 86%;
+  --ring: 286 70% 55%;
+  --radius: 0.6rem;
+
+  --chart-1: 286 70% 55%;
+  --chart-2: 329 65% 55%;
+  --chart-3: 200 65% 55%;
+  --chart-4: 48 95% 60%;
+  --chart-5: 140 55% 45%;
+
+  /* MAIN GLOBAL GRADIENT */
+  --primary-gradient: linear-gradient(
+    90deg,
+    rgba(39, 14, 76, 0.8) 0%,
+    rgba(106, 71, 121, 0.7) 50%,
+    rgba(35, 10, 72, 0.8) 100%
+  );
+}
+
+/* ------------------------------
+   DARK MODE
+------------------------------ */
+.dark {
+  --background: 276 45% 7%;
+  --foreground: 0 0% 96%;
+
+  --card: 277 35% 11%;
+  --card-foreground: 0 0% 96%;
+
+  --popover: 277 35% 11%;
+  --popover-foreground: 0 0% 96%;
+
+  --primary: 286 70% 55%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 329 55% 50%;
+  --secondary-foreground: 0 0% 100%;
+
+  --muted: 270 8% 28%;
+  --muted-foreground: 260 10% 75%;
+
+  --accent: 286 70% 55%;
+  --accent-foreground: 0 0% 100%;
+
+  --destructive: 0 65% 50%;
+  --destructive-foreground: 0 0% 96%;
+
+  --border: 276 25% 22%;
+  --input: 276 25% 22%;
+  --ring: 286 80% 60%;
+
+  --chart-1: 286 75% 60%;
+  --chart-2: 329 70% 60%;
+  --chart-3: 200 75% 60%;
+  --chart-4: 48 95% 60%;
+  --chart-5: 140 60% 50%;
+}
+
+/* ------------------------------
+   BASE STYLES
+------------------------------ */
+* {
+  border-color: hsl(var(--border));
+}
+
+/* 🔥 GLOBAL BACKGROUND GRADIENT EVERYWHERE */
+body {
+  background: var(--primary-gradient);
+  background-attachment: fixed;
+  color: hsl(var(--foreground));
+}
+
+/* ------------------------------
+   GLASSMORPHISM + UI POLISH
+------------------------------ */
+.card {
+  background: rgba(62, 18, 18, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.35);
+  border-radius: 14px;
+}
+
+.button-primary {
+  box-shadow: 0 0 20px rgba(46, 21, 84, 0.35);
+}
+
+.shadow-xl {
+  box-shadow: 0 25px 45px rgba(0, 0, 0, 0.25);
+}
+
+/* ------------------------------
+   TAILWIND v4 UTILITIES
+------------------------------ */
+
+/* Static gradient utility */
+@utility bg-primary-gradient {
+  background: var(--primary-gradient);
+}
+
+/* Animated gradient utility */
+@utility bg-primary-gradient-animated {
+  background: var(--primary-gradient);
+  background-size: 200% 200%;
+  animation: gradientMove 6s ease infinite;
+}
+
+/* Keyframes */
+@keyframes gradientMove {
+  0% {
+    background-position: 0% 50%;
   }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+.sidebar-item {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid transparent;
+}
 
-  .dark {
-    --background: 308 22% 10%;
-    --foreground: 57 10% 90%;
-    --card: 308 22% 15%;
-    --card-foreground: 57 10% 90%;
-    --popover: 308 22% 15%;
-    --popover-foreground: 57 10% 90%;
+.sidebar-item:hover {
+  background: rgba(255,255,255,0.10);
+}
 
-    --primary: 308 22% 35%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 329 16% 45%;
-    --secondary-foreground: 0 0% 100%;
-
-    --muted: 57 6% 30%;
-    --muted-foreground: 57 10% 70%;
-
-    --accent: 329 16% 45%;
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 57 6% 25%;
-    --input: 57 6% 25%;
-    --ring: 308 22% 40%;
-
-    --chart-1: 308 22% 40%;
-    --chart-2: 329 16% 50%;
-    --chart-3: 57 6% 60%;
-    --chart-4: 308 15% 55%;
-    --chart-5: 329 10% 65%;
+.sidebar-item-active {
+  background: linear-gradient(135deg, #a06bff40, #ff7bff40);
+  border: 1px solid rgba(255,255,255,0.25);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.35);
+}
+.sidebar-item-active:hover {
+  background: linear-gradient(135deg, #a06bff60, #ff7bff60);
+}
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-@layer base {
-  * {
-    border-color: hsl(var(--border));
-  }
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+  20%, 40%, 60%, 80% { transform: translateX(2px); }
+}
 
-  body {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
-  }
+@keyframes pulse-slow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.5s ease-out;
+}
+
+.animation-delay-100 {
+  animation-delay: 100ms;
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 3s ease-in-out infinite;
 }
