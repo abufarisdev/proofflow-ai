@@ -199,7 +199,6 @@ body {
 
 .animate-pulse-slow {
   animation: pulse-slow 3s ease-in-out infinite;
-<<<<<<< HEAD
 }
 @keyframes fade-in {
   from {
@@ -277,6 +276,4 @@ body {
 ::selection {
   background: rgba(147, 51, 234, 0.3);
   color: white;
-=======
->>>>>>> 945a1c77f51cb7a71e284f0b67a8e3082cbc54f0
 }
