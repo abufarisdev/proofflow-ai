@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useTheme } from "next-themes"
-import { BarChart3, FileText, Settings, Moon, Sun, LogOut, User, ChevronLeft, ChevronRight, Menu } from "lucide-react"
+import { BarChart3, FileText, Settings, Moon, Sun, LogOut, User, ChevronLeft, ChevronRight, Menu, FolderKanban } from "lucide-react"
 import { useState, useEffect } from "react"
 import { logout } from "@/services/authService"
 
@@ -14,7 +14,8 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: BarChart3 },
-  { href: "/projects", label: "Projects", icon: FileText },
+  { href: "/projects", label: "Projects", icon: FolderKanban },
+
   { href: "/reports", label: "Reports", icon: FileText },
   { href: "/profile", label: "Profile", icon: User },
   { href: "/settings", label: "Settings", icon: Settings },
@@ -56,7 +57,7 @@ export function Sidebar() {
     <>
       <div className={`p-6 border-b border-sidebar-border ${!mobile && isCollapsed ? 'flex justify-center' : ''}`}>
         <div className="flex items-center gap-3 overflow-hidden">
-          <div className="min-w-10 h-10 bg-gradient-to-br from-[#51344D] to-[#6F5060] rounded-xl flex items-center justify-center shadow-lg">
+          <div className="min-w-10 h-10 bg-linear-to-br from-[#51344D] to-[#6F5060] rounded-xl flex items-center justify-center shadow-lg">
             <span className="text-white font-bold text-lg">P</span>
           </div>
           <div className={`transition-opacity duration-300 ${!mobile && isCollapsed ? 'opacity-0 w-0' : 'opacity-100'}`}>
@@ -147,7 +148,7 @@ export function Sidebar() {
     <>
       <div className="md:hidden flex items-center justify-between p-4 bg-background border-b border-border w-full sticky top-0 z-50">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-[#51344D] to-[#6F5060] rounded-lg flex items-center justify-center shadow-md">
+          <div className="w-8 h-8 bg-linear-to-br from-[#51344D] to-[#6F5060] rounded-lg flex items-center justify-center shadow-md">
             <span className="text-white font-bold text-sm">P</span>
           </div>
           <span className="font-bold text-foreground">ProofFlow</span>

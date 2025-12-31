@@ -1,17 +1,8 @@
+
 'use client';
 
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   BarChart,
   Bar,
@@ -25,13 +16,12 @@ import {
   Pie,
   Cell,
 } from "recharts";
-import { TrendingUp, AlertCircle, CheckCircle, Clock, FileText, Plus, ArrowRight } from "lucide-react";
+import { TrendingUp, AlertCircle, CheckCircle, Clock, FileText, Plus } from "lucide-react";
 import { getReports } from "@/services/reportService";
 
 import { useState, useEffect } from "react";
 import { Report } from "@/types";
 import { auth } from "@/firebase";
-import Link from "next/link";
 
 export function Dashboard() {
   const [reports, setReports] = useState<Report[]>([]);
@@ -49,17 +39,15 @@ export function Dashboard() {
     getReports()
       .then((response: any) => {
         if (response?.data && Array.isArray(response.data)) {
-          const mappedReports: Report[] = response.data.map((item: any) => ({
+          const mappedReports = response.data.map((item: any) => ({
             id: item._id,
             name: item.projectId?.repoName || 'Unknown Project',
             repoUrl: item.projectId?.repoUrl || '',
-            status: (item.projectId?.status || 'pending') as Report['status'],
+            status: item.projectId?.status || 'pending',
             confidence: item.confidenceScore || 0,
-            createdAt: item.createdAt || new Date().toISOString(),
+            createdAt: item.createdAt,
             action: 'Report Generated'
           }));
-          // Sort by date desc - ensure valid dates
-          mappedReports.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
           setReports(mappedReports);
         }
       })
@@ -67,8 +55,6 @@ export function Dashboard() {
         console.error("Failed to get reports", error);
       })
       .finally(() => setLoading(false));
-
-    return () => unsubscribe();
   }, []);
 
 
@@ -95,7 +81,7 @@ export function Dashboard() {
       acc.push({ date, submissions: 1, verified: report.status === 'verified' ? 1 : 0 });
     }
     return acc;
-  }, []).slice(-7); // Last 7 days/entries
+  }, []);
 
   const confidenceData = [
     { name: "High (>90%)", value: reports.filter(r => r.confidence > 90).length, color: "#51344D" },
@@ -120,13 +106,13 @@ export function Dashboard() {
           <p className="text-muted-foreground max-w-md mb-8">
             Start by generating your first report to analyze code authenticity and get detailed insights.
           </p>
-          <Link
+          <a
             href="/reports"
             className="inline-flex items-center gap-2 px-6 py-3 bg-primary-custom text-white rounded-lg hover:bg-primary-custom/90 transition-all hover:scale-105 active:scale-95 shadow-md"
           >
             <Plus className="w-5 h-5" />
             Generate first report
-          </Link>
+          </a>
         </div>
       ) : (
         <>
@@ -204,7 +190,7 @@ export function Dashboard() {
           {/* Charts Row */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             {/* Activity Chart */}
-            <Card className="col-span-1 lg:col-span-2 p-6 bg-card border-border h-[400px] animate-in fade-in slide-in-from-bottom-8 duration-700 flex flex-col">
+            <Card className="col-span-1 lg:col-span-2 p-6 bg-card border-border h-100 animate-in fade-in slide-in-from-bottom-8 duration-700 flex flex-col">
               <h2 className="text-lg font-semibold text-foreground mb-6">Weekly Activity</h2>
               {loading ? (
                 <div className="w-full flex-1 flex items-end gap-4 justify-between px-4 pb-4">
@@ -238,7 +224,7 @@ export function Dashboard() {
             </Card>
 
             {/* Confidence Distribution */}
-            <Card className="p-6 bg-card border-border h-[400px] animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100 flex flex-col">
+            <Card className="p-6 bg-card border-border h-100 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100 flex flex-col">
               <h2 className="text-lg font-semibold text-foreground mb-6">Confidence Levels</h2>
               {loading ? (
                 <div className="w-full flex-1 flex items-center justify-center">

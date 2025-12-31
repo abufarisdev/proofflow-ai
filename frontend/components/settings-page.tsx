@@ -95,7 +95,12 @@ export function SettingsPage() {
         {sections.map((section, sectionIndex) => {
           const Icon = section.icon
           return (
-            <Card key={sectionIndex} className="bg-card border-border overflow-hidden">
+            <Card
+              key={sectionIndex}
+              className="overflow-hidden border border-white/20 backdrop-blur-xl
+  bg-[linear-gradient(135deg,rgba(255,255,255,0.18),rgba(255,255,255,0.03))]"
+            >
+
               {/* Section Header */}
               <div className="p-6 border-b border-border flex items-start justify-between">
                 <div className="flex items-start gap-4">
@@ -120,14 +125,21 @@ export function SettingsPage() {
                     <span className="text-foreground font-medium">{item.label}</span>
                     <div>
                       {item.enabled !== undefined ? (
-                        <button
-                          onClick={() => handleToggle(sectionIndex, itemIndex)}
-                          className={`w-12 h-6 rounded-full transition-colors ${item.enabled ? "bg-chart-1" : "bg-border"}`}
-                        >
-                          <div
-                            className={`w-5 h-5 rounded-full bg-white transition-transform ${item.enabled ? "translate-x-6" : "translate-x-0.5"} mt-0.5`}
-                          />
-                        </button>
+  <button
+  onClick={() => handleToggle(sectionIndex, itemIndex)}
+  className={`w-12 h-6 rounded-full transition-all border ${
+    item.enabled
+      ? "bg-gradient-to-r from-green-400 to-green-500 border-green-400 shadow-lg"
+      : "bg-border border-gray-500"
+  }`}
+>
+  <div
+  className={`w-5 h-5 rounded-full bg-white shadow-md transition-transform duration-300 ease-out
+    ${item.enabled ? "translate-x-6 scale-[1.05]" : "translate-x-0.5"}`}
+ />
+
+</button>
+
                       ) : (
                         <span className="text-sm text-muted-foreground">{item.count || item.value}</span>
                       )}
@@ -143,7 +155,7 @@ export function SettingsPage() {
       {/* Danger Zone */}
       <Card className="mt-8 p-6 bg-destructive/5 border border-destructive/30">
         <h3 className="text-lg font-semibold text-destructive mb-4">Danger Zone</h3>
-        <button className="px-6 py-2 bg-destructive text-destructive-foreground rounded-lg hover:opacity-90 transition-opacity font-medium">
+        <button className="px-6 py-3 bg-destructive text-destructive-foreground rounded-lg hover:opacity-90 transition-opacity font-medium bg-red-800">
           Delete Account
         </button>
       </Card>
