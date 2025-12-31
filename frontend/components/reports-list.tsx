@@ -152,9 +152,10 @@ export function ReportsList() {
 
     const getStatusBadge = (status: string) => {
         switch (status) {
-            case 'verified': return <Badge className="bg-[#6F5060] hover:bg-[#6F5060]/90">Verified</Badge>;
-            case 'flagged': return <Badge variant="destructive">Flagged</Badge>;
-            case 'pending': return <Badge variant="secondary" className="text-muted-foreground">Pending</Badge>;
+            case 'verified': return <Badge variant="verified">Verified</Badge>;
+            case 'flagged': return <Badge variant="failed">Flagged</Badge>;
+            case 'pending': return <Badge variant="pending">Pending</Badge>;
+            case 'processing': return <Badge variant="processing">Processing</Badge>;
             default: return <Badge variant="outline">{status}</Badge>;
         }
     };
@@ -176,7 +177,6 @@ export function ReportsList() {
                         Delete Selected ({selectedReports.length})
                     </Button>
                     <Button
-                        className="bg-[#51344D] hover:bg-[#6F5060] text-white"
                         onClick={() => setIsCreateOpen(true)}
                     >
                         <Plus size={16} className="mr-2" />
@@ -185,7 +185,7 @@ export function ReportsList() {
                 </div>
             </div>
 
-            <Card className="border-border shadow-sm">
+            <Card>
                 <CardHeader>
                     <CardTitle>Recent Reports</CardTitle>
                     <CardDescription>A list of all your generated reports and their status.</CardDescription>
@@ -331,7 +331,6 @@ export function ReportsList() {
                         <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
                         <Button
                             onClick={handleCreateReport}
-                            className="bg-[#51344D] hover:bg-[#6F5060] text-white"
                             disabled={createLoading || !selectedProjectId}
                         >
                             {createLoading ? "Generating..." : "Generate Report"}

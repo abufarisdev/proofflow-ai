@@ -138,7 +138,6 @@ export function ProjectsList() {
                         Delete Selected ({selectedProjects.length})
                     </Button>
                     <Button
-                        className="bg-[#51344D] hover:bg-[#6F5060] text-white"
                         onClick={() => setIsCreateOpen(true)}
                     >
                         <Plus size={16} className="mr-2" />
@@ -147,7 +146,7 @@ export function ProjectsList() {
                 </div>
             </div>
 
-            <Card className="border-border shadow-sm">
+            <Card>
                 <CardContent className="p-0">
                     <Table>
                         <TableHeader>
@@ -196,14 +195,13 @@ export function ProjectsList() {
                                     </TableCell>
                                     <TableCell>
                                         <Badge
-                                            variant="outline"
-                                            className={`
-                          ${project.status === 'active' ? 'bg-green-500/10 text-green-700 border-green-200' : ''}
-                          ${project.status === 'maintenance' ? 'bg-yellow-500/10 text-yellow-700 border-yellow-200' : ''}
-                          ${project.status === 'archived' ? 'bg-gray-500/10 text-gray-700 border-gray-200' : ''}
-                        `}
+                                            variant={
+                                                project.status === 'active' ? 'verified' :
+                                                    project.status === 'maintenance' ? 'pending' :
+                                                        'outline'
+                                            }
                                         >
-                                            {project.status}
+                                            {project.status.charAt(0).toUpperCase() + project.status.slice(1)}
                                         </Badge>
                                     </TableCell>
                                     <TableCell>
@@ -274,7 +272,7 @@ export function ProjectsList() {
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
-                        <Button onClick={handleCreateProject} className="bg-[#51344D] hover:bg-[#6F5060] text-white">Create Project</Button>
+                        <Button onClick={handleCreateProject}>Create Project</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

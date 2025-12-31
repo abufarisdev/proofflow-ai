@@ -98,15 +98,15 @@ export function Dashboard() {
   }, []).slice(-7); // Last 7 days/entries
 
   const confidenceData = [
-    { name: "High (>90%)", value: reports.filter(r => r.confidence > 90).length, color: "#51344D" },
-    { name: "Medium (70-90%)", value: reports.filter(r => r.confidence >= 70 && r.confidence <= 90).length, color: "#6F5060" },
-    { name: "Low (<70%)", value: reports.filter(r => r.confidence < 70).length, color: "#989788" },
+    { name: "High (>90%)", value: reports.filter(r => r.confidence > 90).length, color: "#7c3aed" },
+    { name: "Medium (70-90%)", value: reports.filter(r => r.confidence >= 70 && r.confidence <= 90).length, color: "#a78bfa" },
+    { name: "Low (<70%)", value: reports.filter(r => r.confidence < 70).length, color: "#94a3b8" },
   ];
 
   return (
     <div className="p-4 sm:p-8 bg-background min-h-screen">
       {/* Header */}
-      <div className="mb-8 p-8 rounded-xl bg-linear-to-br from-[#51344D] to-[#6F5060] text-white shadow-md animate-in fade-in slide-in-from-top-4 duration-700">
+      <div className="mb-8 p-8 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg animate-in fade-in slide-in-from-top-4 duration-700">
         <h1 className="text-2xl sm:text-3xl font-bold mb-2">Welcome back, {userName}!</h1>
         <p className="text-white/80 text-sm sm:text-base">Here's your project authenticity overview.</p>
       </div>
@@ -135,7 +135,7 @@ export function Dashboard() {
             {loading ? (
               <>
                 {[...Array(4)].map((_, i) => (
-                  <Card key={i} className="p-6 bg-card border-border">
+                  <Card key={i} className="p-6">
                     <div className="flex items-start justify-between">
                       <div className="w-full">
                         <Skeleton className="h-4 w-24 mb-2 bg-muted-custom/20" />
@@ -148,19 +148,19 @@ export function Dashboard() {
               </>
             ) : (
               <>
-                <Card className="p-6 bg-white/50 backdrop-blur-md border-white/20 shadow-sm hover:shadow-lg hover:scale-[1.02] transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 delay-0 fill-mode-backwards group">
+                <Card className="p-6 group hover:scale-[1.02] transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 delay-0 fill-mode-backwards">
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-sm text-muted-custom font-medium mb-1 group-hover:text-primary-custom/80 transition-colors">Total Projects</p>
                       <p className="text-3xl font-bold text-foreground animate-in fade-in slide-in-from-bottom-2 duration-500">{totalProjects}</p>
                     </div>
-                    <div className="p-2 bg-primary-custom/10 rounded-full group-hover:scale-110 transition-transform duration-300">
-                      <TrendingUp className="w-5 h-5 text-primary-custom" />
+                    <div className="p-2 bg-primary/10 rounded-full group-hover:scale-110 transition-transform duration-300">
+                      <TrendingUp className="w-5 h-5 text-primary" />
                     </div>
                   </div>
                 </Card>
 
-                <Card className="p-6 bg-white/50 backdrop-blur-md border-white/20 shadow-sm hover:shadow-lg hover:scale-[1.02] transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 delay-100 fill-mode-backwards group">
+                <Card className="p-6 group hover:scale-[1.02] transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 delay-100 fill-mode-backwards">
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-sm text-muted-custom font-medium mb-1 group-hover:text-secondary-custom/80 transition-colors">Verified Projects</p>
@@ -173,7 +173,7 @@ export function Dashboard() {
                   <p className="text-xs text-muted-foreground mt-4">{totalProjects > 0 ? ((verifiedProjects / totalProjects) * 100).toFixed(1) : 0}% success rate</p>
                 </Card>
 
-                <Card className="p-6 bg-white/50 backdrop-blur-md border-white/20 shadow-sm hover:shadow-lg hover:scale-[1.02] transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 delay-200 fill-mode-backwards group">
+                <Card className="p-6 group hover:scale-[1.02] transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 delay-200 fill-mode-backwards">
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-sm text-muted-custom font-medium mb-1 group-hover:text-[#989788]/80 transition-colors">Pending Reviews</p>
@@ -185,7 +185,7 @@ export function Dashboard() {
                   </div>
                 </Card>
 
-                <Card className="p-6 bg-white/50 backdrop-blur-md border-white/20 shadow-sm hover:shadow-lg hover:scale-[1.02] transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 delay-300 fill-mode-backwards group">
+                <Card className="p-6 group hover:scale-[1.02] transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 delay-300 fill-mode-backwards">
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-sm text-muted-custom font-medium mb-1 group-hover:text-destructive/80 transition-colors">Flagged Issues</p>
@@ -204,7 +204,7 @@ export function Dashboard() {
           {/* Charts Row */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             {/* Activity Chart */}
-            <Card className="col-span-1 lg:col-span-2 p-6 bg-card border-border h-[400px] animate-in fade-in slide-in-from-bottom-8 duration-700 flex flex-col">
+            <Card className="col-span-1 lg:col-span-2 p-6 h-[400px] animate-in fade-in slide-in-from-bottom-8 duration-700 flex flex-col">
               <h2 className="text-lg font-semibold text-foreground mb-6">Weekly Activity</h2>
               {loading ? (
                 <div className="w-full flex-1 flex items-end gap-4 justify-between px-4 pb-4">
@@ -229,8 +229,8 @@ export function Dashboard() {
                         }}
                       />
                       <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                      <Bar dataKey="submissions" fill="#51344D" radius={[4, 4, 0, 0]} name="Total Reports" />
-                      <Bar dataKey="verified" fill="#6F5060" radius={[4, 4, 0, 0]} name="Verified" />
+                      <Bar dataKey="submissions" fill="#7c3aed" radius={[4, 4, 0, 0]} name="Total Reports" />
+                      <Bar dataKey="verified" fill="#a78bfa" radius={[4, 4, 0, 0]} name="Verified" />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -238,7 +238,7 @@ export function Dashboard() {
             </Card>
 
             {/* Confidence Distribution */}
-            <Card className="p-6 bg-card border-border h-[400px] animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100 flex flex-col">
+            <Card className="p-6 h-[400px] animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100 flex flex-col">
               <h2 className="text-lg font-semibold text-foreground mb-6">Confidence Levels</h2>
               {loading ? (
                 <div className="w-full flex-1 flex items-center justify-center">
@@ -279,7 +279,7 @@ export function Dashboard() {
           {/* Recent Projects and Activity */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Recent Projects */}
-            <Card className="col-span-1 lg:col-span-2 p-6 bg-card border-border animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
+            <Card className="col-span-1 lg:col-span-2 p-6 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
               <h2 className="text-lg font-semibold text-foreground mb-6">Recent Projects</h2>
               <div className="space-y-4">
                 {loading ? (
@@ -319,7 +319,7 @@ export function Dashboard() {
             </Card>
 
             {/* Activity Timeline */}
-            <Card className="p-6 bg-card border-border animate-in fade-in slide-in-from-bottom-8 duration-700 delay-300">
+            <Card className="p-6 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-300">
               <h2 className="text-lg font-semibold text-foreground mb-6">Recent Activity</h2>
               <div className="space-y-4">
                 {loading ? (
