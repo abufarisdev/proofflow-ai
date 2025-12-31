@@ -2,7 +2,7 @@ export interface Report {
     id: string;
     name: string;
     repoUrl: string;
-    status: 'pending' | 'analyzing' | 'verified' | 'flagged';
+    status: 'pending' | 'analyzing' | 'verified' | 'flagged'| 'processing';
     confidence: number;
     createdAt: string;
     action?: string; // Add optional action for activity derivation
