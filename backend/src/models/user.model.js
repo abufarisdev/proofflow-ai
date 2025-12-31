@@ -1,39 +1,26 @@
-import { admin, db } from "../config/firebase.js";
+import { db } from "../config/firebase.js";
 
-const usersCollection = db.collection("users");
+const USERS = "users";
 
-export const getUserById = async (firebaseUid) => {
-  if (!firebaseUid) return null;
-
-  const doc = await usersCollection.doc(firebaseUid).get();
-  return doc.exists ? { id: doc.id, ...doc.data() } : null;
+export const getUserById = async (uid) => {
+  const doc = await db.collection(USERS).doc(uid).get();
+  return doc.exists ? doc.data() : null;
 };
 
-export const createUser = async (userData) => {
-  if (!userData?.firebaseUid) {
-    throw new Error("firebaseUid required");
-  }
-
-  const timestamp = admin.firestore.FieldValue.serverTimestamp();
-
-  const payload = {
-    ...userData,
-    createdAt: timestamp,
-    updatedAt: timestamp,
-  };
-
-  await usersCollection.doc(userData.firebaseUid).set(payload);
-
-  const doc = await usersCollection.doc(userData.firebaseUid).get();
-  return { id: doc.id, ...doc.data() };
+export const createUser = async (user) => {
+  await db.collection(USERS).doc(user.firebaseUid).set({
+    ...user,
+    createdAt: new Date(),
+  });
+  return user;
 };
 
-export const updateUser = async (firebaseUid, updateData) => {
-  await usersCollection.doc(firebaseUid).update({
-    ...updateData,
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+export const updateUser = async (uid, updates) => {
+  await db.collection(USERS).doc(uid).update({
+    ...updates,
+    updatedAt: new Date(),
   });
 
-  const doc = await usersCollection.doc(firebaseUid).get();
-  return { id: doc.id, ...doc.data() };
+  const updated = await db.collection(USERS).doc(uid).get();
+  return updated.data();
 };

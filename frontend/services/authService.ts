@@ -17,16 +17,6 @@ export const signUpWithEmailAndPassword = async (email: string, password: string
   }
 };
 
-export const signInWithEmailAndPassword = async (email: string, password: string): Promise<UserCredential['user']> => {
-  try {
-    const userCredential = await firebaseSignInWithEmailAndPassword(auth, email, password);
-    return userCredential.user;
-  } catch (error) {
-    console.error("Error signing in", error);
-    throw error;
-  }
-};
-
 export const logout = async () => {
   try {
     await firebaseSignOut(auth);

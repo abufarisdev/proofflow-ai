@@ -19,11 +19,16 @@ import {
   
   export const updateMe = async (req, res) => {
     try {
-      const uid = req.user?.firebaseUid;
-      const user = await updateUser(uid, req.body);
+      if (!req.user?.firebaseUid) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+  
+      const user = await updateUser(req.user.firebaseUid, req.body);
       res.json({ success: true, user });
     } catch (err) {
+      console.error(err);
       res.status(500).json({ message: "Server error" });
     }
   };
+  
   
