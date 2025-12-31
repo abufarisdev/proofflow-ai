@@ -144,7 +144,7 @@ export function ProfileForm({ isEditing, setIsEditing }: ProfileFormProps) {
 
       {loading ? (
         <div className="relative">
-          <div className="absolute -inset-4 bg-gradient-to-r from-purple-600/20 via-pink-600/20 to-cyan-600/20 rounded-3xl blur-xl" />
+          <div className="absolute -inset-4 bg-linear-to-r from-purple-600/20 via-pink-600/20 to-cyan-600/20 rounded-3xl blur-xl" />
           <Card className="relative p-8 bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20 z-10">
             <div className="flex flex-col md:flex-row gap-8 mb-8 pb-8 border-b border-white/10">
               <div className="shrink-0">
@@ -170,7 +170,7 @@ export function ProfileForm({ isEditing, setIsEditing }: ProfileFormProps) {
           className="relative group"
         >
           {/* Card Glow Effect */}
-          <div className="absolute -inset-4 bg-gradient-to-r from-purple-600/20 via-pink-600/20 to-cyan-600/20 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <div className="absolute -inset-4 bg-linear-to-r from-purple-600/20 via-pink-600/20 to-cyan-600/20 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           
           <Card className="relative bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20 z-10 overflow-hidden">
             <div className="p-8">
@@ -225,7 +225,7 @@ export function ProfileForm({ isEditing, setIsEditing }: ProfileFormProps) {
                         >
                           <Sparkles className="w-5 h-5 text-purple-400" />
                         </motion.div>
-                        <h2 className="text-3xl font-bold bg-gradient-to-r from-white via-purple-100 to-pink-100 bg-clip-text text-transparent">
+                        <h2 className="text-3xl font-bold bg-linear-to-r from-white via-purple-100 to-pink-100 bg-clip-text text-transparent">
                           {formData.displayName}
                         </h2>
                       </motion.div>
@@ -253,7 +253,7 @@ export function ProfileForm({ isEditing, setIsEditing }: ProfileFormProps) {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => setIsEditing(true)}
-                        className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:shadow-lg hover:shadow-purple-500/30 transition-all shadow-md font-medium"
+                        className="px-6 py-2.5 bg-linear-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:shadow-lg hover:shadow-purple-500/30 transition-all shadow-md font-medium"
                       >
                         Edit Profile
                       </motion.button>

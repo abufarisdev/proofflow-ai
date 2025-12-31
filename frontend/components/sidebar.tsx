@@ -282,7 +282,7 @@ export function Sidebar() {
           {(!mobile && !isCollapsed) && (
             <div className="flex-1 min-w-0 text-left transition-all duration-300 ease-in-out">
               <span className="text-sm font-medium">
-                {resolvedTheme === "light" ? "Dark Mode" : "Light Mode"}
+                {resolvedTheme === "light" ? "Light Mode" : "Dark Mode"}
               </span>
               <p className="text-xs text-gray-400">Switch theme</p>
             </div>
