@@ -2,7 +2,7 @@ import api from "@/lib/api";
 
 export const getProfile = async () => {
   try {
-    const response = await api.get("/users/profile");
+    const response = await api.get("/users/me");
     return response.data;
   } catch (error) {
     console.error("Error getting user", error);
@@ -12,7 +12,7 @@ export const getProfile = async () => {
 
 export const updateProfile = async (data: any) => {
   try {
-    const response = await api.put("/users/profile", data);
+    const response = await api.put("/users/me", data);
     return response.data;
   } catch (error) {
     console.error("Error updating user profile", error);

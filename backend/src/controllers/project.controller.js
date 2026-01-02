@@ -1,6 +1,11 @@
-import { admin, db } from "../config/firebase.js";
+import { admin, db, isFirebaseInitialized } from "../config/firebase.js";
 
-const projectsCollection = db.collection("projects");
+const getProjectsCollection = () => {
+  if (!isFirebaseInitialized()) {
+    throw new Error("Firebase is not initialized. Please check your environment variables.");
+  }
+  return db.collection("projects");
+};
 
 export const createProject = async (req, res) => {
   try {
@@ -22,7 +27,7 @@ export const createProject = async (req, res) => {
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 
-    const ref = await projectsCollection.add(data);
+    const ref = await getProjectsCollection().add(data);
 
     res.status(201).json({
       success: true,
@@ -35,16 +40,24 @@ export const createProject = async (req, res) => {
 };
 
 export const getUserProjects = async (req, res) => {
-  const userId = req.user?.firebaseUid;
+  try {
+    const userId = req.user?.firebaseUid;
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
 
-  const snap = await projectsCollection
-    .where("userId", "==", userId)
-    .get();
+    const snap = await getProjectsCollection()
+      .where("userId", "==", userId)
+      .get();
 
-  const projects = snap.docs.map((d) => ({
-    id: d.id,
-    ...d.data(),
-  }));
+    const projects = snap.docs.map((d) => ({
+      id: d.id,
+      ...d.data(),
+    }));
 
-  res.json({ success: true, projects });
+    res.json({ success: true, projects });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
 };

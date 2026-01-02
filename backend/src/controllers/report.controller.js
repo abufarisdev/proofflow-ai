@@ -1,20 +1,24 @@
-import Project from "../models/projects.model.js";
-import Verification from "../models/verification.model.js";
-import mongoose from "mongoose";
+import { getProjectById, updateProject } from "../models/projects.model.js";
+import { 
+  getReportByProjectId, 
+  createReport as createReportInDb,
+  getReportsByUserId,
+  getReportById as getReportByIdFromDb
+} from "../models/reports.model.js";
 
 export const createReport = async (req, res) => {
   try {
     const { projectId } = req.body;
 
     // 1️⃣ Validate input
-    if (!projectId || !mongoose.Types.ObjectId.isValid(projectId)) {
+    if (!projectId || typeof projectId !== "string" || projectId.trim() === "") {
       return res.status(400).json({
         success: false,
         message: "Invalid or missing projectId",
       });
     }
 
-    const userId = req.user?.uid; // safe optional chaining
+    const userId = req.user?.firebaseUid;
     if (!userId) {
       return res.status(401).json({
         success: false,
@@ -23,8 +27,8 @@ export const createReport = async (req, res) => {
     }
 
     // 2️⃣ Check project exists & belongs to user
-    const project = await Project.findOne({ _id: projectId, userId });
-    if (!project) {
+    const project = await getProjectById(projectId);
+    if (!project || project.userId !== userId) {
       return res.status(404).json({
         success: false,
         message: "Project not found or you don't have access",
@@ -32,7 +36,7 @@ export const createReport = async (req, res) => {
     }
 
     // 3️⃣ Prevent duplicate reports
-    const existingReport = await Verification.findOne({ projectId });
+    const existingReport = await getReportByProjectId(projectId);
     if (existingReport) {
       return res.status(400).json({
         success: false,
@@ -48,16 +52,16 @@ export const createReport = async (req, res) => {
     const flags = [];
 
     // 6️⃣ Create verification report
-    const report = await Verification.create({
+    const report = await createReportInDb({
       projectId,
       timeline,
       confidenceScore,
       flags,
+      summary: "",
     });
 
     // 7️⃣ Update project status
-    project.status = "pending"; // initial pending
-    await project.save();
+    await updateProject(projectId, { status: "pending" });
 
     // 8️⃣ Return response
     return res.status(201).json({
@@ -67,15 +71,6 @@ export const createReport = async (req, res) => {
     });
   } catch (error) {
     console.error("Create Report Error:", error);
-
-    // Handle Mongoose validation errors
-    if (error.name === "ValidationError") {
-      return res.status(400).json({
-        success: false,
-        message: error.message,
-        errors: error.errors,
-      });
-    }
 
     // Catch all unexpected errors
     return res.status(500).json({
@@ -87,7 +82,7 @@ export const createReport = async (req, res) => {
 
 export const getAllReports = async (req, res) => {
   try {
-    const userId = req.user?.uid;
+    const userId = req.user?.firebaseUid;
     if (!userId) {
       return res.status(401).json({
         success: false,
@@ -96,16 +91,43 @@ export const getAllReports = async (req, res) => {
     }
 
     // Fetch all reports for projects owned by this user
-    const reports = await Verification.find()
-      .populate({
-        path: "projectId",
-        match: { userId },
-        select: "repoName repoUrl status",
+    const reports = await getReportsByUserId(userId);
+    
+    // Fetch project details for each report
+    const reportsWithProjects = await Promise.all(
+      reports.map(async (report) => {
+        try {
+          // projectId is a string (the document ID)
+          const projectId = report.projectId;
+          if (!projectId) {
+            console.warn("Report missing projectId:", report.id);
+            return null;
+          }
+          
+          const project = await getProjectById(projectId);
+          if (!project) {
+            console.warn("Project not found for report:", report.id, "projectId:", projectId);
+            return null;
+          }
+          
+          return {
+            ...report,
+            project: {
+              id: project.id,
+              repoName: project.repoName,
+              repoUrl: project.repoUrl,
+              status: project.status,
+            },
+          };
+        } catch (err) {
+          console.error("Error fetching project for report:", report.id, err);
+          return null;
+        }
       })
-      .sort({ createdAt: -1 });
+    );
 
-    // Filter out reports where project is null (not owned by this user)
-    const userReports = reports.filter((report) => report.projectId !== null);
+    // Filter out null reports
+    const userReports = reportsWithProjects.filter((report) => report !== null);
 
     return res.status(200).json({
       success: true,
@@ -114,45 +136,64 @@ export const getAllReports = async (req, res) => {
     });
   } catch (error) {
     console.error("Get All Reports Error:", error);
+    console.error("Error stack:", error.stack);
     return res.status(500).json({
       success: false,
       message: "Internal server error",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
 
 export const getReportById = async (req, res) => {
   try {
-    const projectId = req.params.id; 
-    const userId = req.user?.uid;
+    const reportId = req.params.id; 
+    const userId = req.user?.firebaseUid;
 
-    if (!mongoose.Types.ObjectId.isValid(projectId)) {
+    if (!reportId || typeof reportId !== "string" || reportId.trim() === "") {
       return res.status(400).json({
         success: false,
-        message: "Invalid project ID",
+        message: "Invalid report ID",
       });
     }
 
-    // Find the report by projectId and populate project info
-    const report = await Verification.findOne({ projectId }).populate({
-      path: "projectId",
-      match: { userId }, // only include if the project belongs to the logged-in user
-      select: "repoName repoUrl status",
-    });
+    // Find the report by ID
+    const report = await getReportByIdFromDb(reportId);
 
-    if (!report || !report.projectId) {
+    if (!report) {
+      return res.status(404).json({
+        success: false,
+        message: "Report not found",
+      });
+    }
+
+    // Check if the project belongs to the user
+    const project = await getProjectById(report.projectId);
+    
+    if (!project || project.userId !== userId) {
       return res.status(404).json({
         success: false,
         message: "Report not found or you do not have access",
       });
     }
 
+    // Add project info to the report
+    const reportWithProject = {
+      ...report,
+      projectId: {
+        id: project.id,
+        repoName: project.repoName,
+        repoUrl: project.repoUrl,
+        status: project.status,
+      },
+    };
+
     return res.status(200).json({
       success: true,
-      data: report,
+      data: reportWithProject,
     });
   } catch (error) {
-    console.error("Get Report By Project ID Error:", error);
+    console.error("Get Report By ID Error:", error);
     return res.status(500).json({
       success: false,
       message: "Internal server error",

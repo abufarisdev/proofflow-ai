@@ -1,4 +1,14 @@
 import admin from "firebase-admin";
+import dotenv from "dotenv";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
+
+// Get the directory of the current module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Load environment variables first (path relative to backend root)
+dotenv.config({ path: join(__dirname, "../../.env") });
 
 let adminInstance;
 let db;
@@ -18,23 +28,36 @@ try {
     "universe_domain": process.env.FIREBASE_UNIVERSE_DOMAIN
   };
 
-  if (serviceAccount.project_id) {
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-    });
-    admin
-Instance = admin;
+  if (serviceAccount.project_id && serviceAccount.private_key && serviceAccount.client_email) {
+    // Check if Firebase app is already initialized
+    if (admin.apps.length === 0) {
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+      });
+    }
+    adminInstance = admin;
     db = admin.firestore();
     console.log("🔥 Firebase Admin Initialized");
+    console.log(`   Project ID: ${serviceAccount.project_id}`);
   } else {
     console.warn("⚠️ Firebase service account environment variables not found. Admin SDK not initialized.");
+    console.warn("Required env vars: FIREBASE_PROJECT_ID, FIREBASE_PRIVATE_KEY, FIREBASE_CLIENT_EMAIL");
+    console.warn(`   FIREBASE_PROJECT_ID: ${serviceAccount.project_id ? "✅ Set" : "❌ Missing"}`);
+    console.warn(`   FIREBASE_PRIVATE_KEY: ${serviceAccount.private_key ? "✅ Set" : "❌ Missing"}`);
+    console.warn(`   FIREBASE_CLIENT_EMAIL: ${serviceAccount.client_email ? "✅ Set" : "❌ Missing"}`);
+    console.warn("   Make sure your .env file is in the backend/ directory with all Firebase credentials.");
     adminInstance = null;
     db = null;
   }
 } catch (error) {
-  console.error("❌ Firebase Admin Init Failed:", error);
+  console.error("❌ Firebase Admin Init Failed:", error.message);
   adminInstance = null;
   db = null;
 }
+
+// Helper function to check if db is initialized
+export const isFirebaseInitialized = () => {
+  return db !== null && adminInstance !== null;
+};
 
 export { adminInstance as admin, db };

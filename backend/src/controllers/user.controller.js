@@ -13,7 +13,12 @@ import {
       const user = await getUserById(uid);
       res.json({ success: true, user });
     } catch (err) {
-      res.status(500).json({ message: "Server error" });
+      console.error("Get Me Error:", err);
+      console.error("Error stack:", err.stack);
+      res.status(500).json({ 
+        message: "Server error",
+        error: process.env.NODE_ENV === "development" ? err.message : undefined,
+      });
     }
   };
   

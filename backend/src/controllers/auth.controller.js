@@ -1,6 +1,6 @@
 import axios from "axios";
 import dotenv from "dotenv";
-import {admin} from "../config/firebase.js";
+import { admin, isFirebaseInitialized } from "../config/firebase.js";
 
 dotenv.config();
 
@@ -68,6 +68,11 @@ export const exchangeCodeForToken = async (req, res) => {
 
     if (!email) {
       return res.status(400).json({ error: "No email found for GitHub user" });
+    }
+
+    // Check if Firebase is initialized
+    if (!isFirebaseInitialized()) {
+      return res.status(500).json({ error: "Firebase is not initialized. Please check server configuration." });
     }
 
     // Create Firebase custom token
