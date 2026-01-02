@@ -1,10 +1,10 @@
 import express from "express";
-import { getProfile, updateProfile } from "../controllers/user.controller.js";
-import authMiddleware from "../middleware/firebaseAuth.js";
+import firebaseAuth from "../middleware/firebaseAuth.js";
+import { getMe, updateMe } from "../controllers/user.controller.js";
 
 const router = express.Router();
 
-router.get("/profile", authMiddleware, getProfile);
-router.put("/profile", authMiddleware, updateProfile);
+router.get("/me", firebaseAuth, getMe);
+router.put("/me", firebaseAuth, updateMe);
 
 export default router;

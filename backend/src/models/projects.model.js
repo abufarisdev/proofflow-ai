@@ -1,35 +1,46 @@
-import mongoose from "mongoose";
+// backend/src/models/projects.model.js (Completely replaced with Firestore logic)
+import { db, admin, isFirebaseInitialized } from "../config/firebase.js";
 
-const projectSchema = new mongoose.Schema(
-  {
-    userId: {
-      type: String,
-      required: true,
-    },
-
-    repoName: {
-      type: String,
-      required: true,
-      minlength: [2, "Repository name must be at least 2 characters"],
-    },
-
-    repoUrl: {
-      type: String,
-      required: true,
-      match: [/^https?:\/\/.+/, "Repository URL is invalid"],
-    },
-
-    status: {
-      type: String,
-      enum: ["pending", "analyzing", "verified", "flagged"],
-      default: "pending",
-    },
-  },
-  {
-    timestamps: true,
+const getProjectsCollection = () => {
+  if (!isFirebaseInitialized()) {
+    throw new Error("Firebase is not initialized. Please check your environment variables.");
   }
-);
+  return db.collection("projects");
+};
 
-const projectModel = mongoose.model("project", projectSchema);
+export const getProjectById = async (projectId) => {
+  const projectDoc = await getProjectsCollection().doc(projectId).get();
+  return projectDoc.exists ? { id: projectDoc.id, ...projectDoc.data() } : null;
+};
 
-export default projectModel;
+export const getProjectsByUserId = async (userId) => {
+  const projectsSnapshot = await getProjectsCollection().where("userId", "==", userId).get();
+  return projectsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+};
+
+export const createProject = async (projectData) => {
+  if (!isFirebaseInitialized()) {
+    throw new Error("Firebase is not initialized. Please check your environment variables.");
+  }
+  const newProjectData = {
+    ...projectData,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    status: projectData.status || "pending", // Add default status as per old schema
+  };
+  const projectRef = await getProjectsCollection().add(newProjectData);
+  return { id: projectRef.id, ...newProjectData };
+};
+
+export const updateProject = async (projectId, updateData) => {
+  await getProjectsCollection().doc(projectId).update({
+    ...updateData,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+  const updatedDoc = await getProjectsCollection().doc(projectId).get();
+  return { id: updatedDoc.id, ...updatedDoc.data() };
+};
+
+export const deleteProject = async (projectId) => {
+  await getProjectsCollection().doc(projectId).delete();
+};

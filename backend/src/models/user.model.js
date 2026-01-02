@@ -1,47 +1,37 @@
-import mongoose from "mongoose";
+import { db, isFirebaseInitialized } from "../config/firebase.js";
 
-const userSchema = new mongoose.Schema(
-    {
-        firebaseUid: {
-            type: String,
-            required: true,
-            unique: true,
-        },
-        email: {
-            type: String,
-            required: true,
-            unique: true,
-        },
-        displayName: {
-            type: String,
-            default: "New User",
-        },
-        organization: {
-            type: String,
-            default: "",
-        },
-        role: {
-            type: String,
-            default: "Developer",
-        },
-        bio: {
-            type: String,
-            default: "",
-        },
-        avatarUrl: {
-            type: String,
-            default: "",
-        },
-        githubUsername: {
-            type: String,
-            default: "",
-        },
-    },
-    {
-        timestamps: true,
-    }
-);
+const USERS = "user";
 
-const User = mongoose.model("User", userSchema);
+export const getUserById = async (uid) => {
+  if (!isFirebaseInitialized()) {
+    throw new Error("Firebase is not initialized. Please check your environment variables.");
+  }
+  const doc = await db.collection(USERS).doc(uid).get();
+  return doc.exists ? doc.data() : null;
+};
 
-export default User;
+export const createUser = async (user) => {
+  if (!isFirebaseInitialized()) {
+    throw new Error("Firebase is not initialized. Please check your environment variables.");
+  }
+  const userData = {
+    ...user,
+    createdAt: new Date(),
+  };
+  await db.collection(USERS).doc(user.firebaseUid).set(userData);
+  console.log(`💾 Firestore write: Created user document ${user.firebaseUid} in collection '${USERS}'`);
+  return userData;
+};
+
+export const updateUser = async (uid, updates) => {
+  if (!isFirebaseInitialized()) {
+    throw new Error("Firebase is not initialized. Please check your environment variables.");
+  }
+  await db.collection(USERS).doc(uid).update({
+    ...updates,
+    updatedAt: new Date(),
+  });
+
+  const updated = await db.collection(USERS).doc(uid).get();
+  return updated.data();
+};

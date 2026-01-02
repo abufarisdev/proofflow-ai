@@ -33,9 +33,9 @@ export function ProfileForm({ isEditing, setIsEditing }: ProfileFormProps) {
     const fetchProfile = async () => {
       try {
         setLoading(true)
-        const res = await api.get("/users/profile")
+        const res = await api.get("/users/me")
         if (res.data.success) {
-          const data = res.data.data
+          const data = res.data.user || res.data.data // Support both formats
           setFormData({
             displayName: data.displayName || "",
             email: data.email || "",
@@ -69,9 +69,19 @@ export function ProfileForm({ isEditing, setIsEditing }: ProfileFormProps) {
 
   const handleSave = async () => {
     try {
-      const res = await api.put("/users/profile", editFormData)
+      const res = await api.put("/users/me", editFormData)
       if (res.data.success) {
-        setFormData(res.data.data)
+        const updatedData = res.data.user || res.data.data // Support both formats
+        setFormData({
+          displayName: updatedData.displayName || "",
+          email: updatedData.email || "",
+          organization: updatedData.organization || "",
+          role: updatedData.role || "",
+          bio: updatedData.bio || "",
+          avatarUrl: updatedData.avatarUrl || "",
+          githubUsername: updatedData.githubUsername || "",
+          joinedDate: updatedData.createdAt || formData.joinedDate,
+        })
         setIsEditing(false)
         setSaveMessage({ type: "success", text: "Profile updated successfully!" })
       }
