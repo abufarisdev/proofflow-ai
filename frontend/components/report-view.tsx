@@ -79,7 +79,7 @@ export function ReportView({ reportId }: ReportViewProps) {
         </div>
 
         {/* Score Card Skeleton */}
-        <Card className="p-8 bg-card border-border mb-8">
+        <Card className="p-8 mb-8">
           <div className="flex items-center justify-between">
             <div>
               <Skeleton className="h-4 w-32 mb-2" />
@@ -92,13 +92,13 @@ export function ReportView({ reportId }: ReportViewProps) {
 
         {/* Charts Grid Skeleton */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <Card className="p-6 bg-card border-border h-[400px]">
+          <Card className="p-6 h-[400px]">
             <Skeleton className="h-6 w-32 mb-6" />
             <div className="flex items-center justify-center h-full">
               <Skeleton className="w-[200px] h-[200px] rounded-full" />
             </div>
           </Card>
-          <Card className="col-span-1 lg:col-span-2 p-6 bg-card border-border h-[400px]">
+          <Card className="col-span-1 lg:col-span-2 p-6 h-[400px]">
             <Skeleton className="h-6 w-48 mb-6" />
             <div className="w-full h-full flex items-end justify-between gap-4 pb-12">
               {[...Array(5)].map((_, i) => (
@@ -109,7 +109,7 @@ export function ReportView({ reportId }: ReportViewProps) {
         </div>
 
         {/* Details Skeleton */}
-        <Card className="p-6 bg-card border-border">
+        <Card className="p-6">
           <Skeleton className="h-6 w-48 mb-6" />
           <div className="space-y-4">
             {[...Array(3)].map((_, i) => (
@@ -149,7 +149,7 @@ export function ReportView({ reportId }: ReportViewProps) {
       </div>
 
       {/* Overall Score Card */}
-      <Card className="p-8 bg-card border-border mb-8">
+      <Card className="p-8 mb-8">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-muted-foreground mb-2">Overall Authenticity Score</p>
@@ -172,7 +172,7 @@ export function ReportView({ reportId }: ReportViewProps) {
       {/* Metrics Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         {/* Radar Chart - Authenticity Metrics */}
-        <Card className="p-6 bg-card border-border">
+        <Card className="p-6">
           <h2 className="text-lg font-semibold text-foreground mb-6">Authenticity Metrics</h2>
           <ResponsiveContainer width="100%" height={300}>
             <RadarChart data={report.authenticityMetrics}>
@@ -191,7 +191,7 @@ export function ReportView({ reportId }: ReportViewProps) {
         </Card>
 
         {/* Timeline Chart */}
-        <Card className="col-span-1 lg:col-span-2 p-6 bg-card border-border">
+        <Card className="col-span-1 lg:col-span-2 p-6">
           <h2 className="text-lg font-semibold text-foreground mb-6">Development Timeline</h2>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={report.timelineData}>
@@ -215,7 +215,7 @@ export function ReportView({ reportId }: ReportViewProps) {
       {/* Detailed Analysis and Flagged Issues */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         {/* Analysis Details */}
-        <Card className="col-span-1 lg:col-span-2 p-6 bg-card border-border">
+        <Card className="col-span-1 lg:col-span-2 p-6">
           <h2 className="text-lg font-semibold text-foreground mb-6">Detailed Analysis Scores</h2>
           <div className="space-y-4">
             {report.detailedAnalysis.map((item, index) => (
@@ -236,7 +236,7 @@ export function ReportView({ reportId }: ReportViewProps) {
         </Card>
 
         {/* Flagged Issues */}
-        <Card className="p-6 bg-card border-border">
+        <Card className="p-6">
           <h2 className="text-lg font-semibold text-foreground mb-6">Flagged Issues</h2>
           <div className="space-y-4">
             {report.flaggedIssues.map((issue) => (
@@ -259,7 +259,7 @@ export function ReportView({ reportId }: ReportViewProps) {
       </div>
 
       {/* Recommendations */}
-      <Card className="p-6 bg-card border-border">
+      <Card className="p-6">
         <h2 className="text-lg font-semibold text-foreground mb-4">Recommendations</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {report.recommendations.map((rec, index) => (

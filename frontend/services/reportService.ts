@@ -25,7 +25,16 @@ export const getReport = async (id: string) => {
     const response = await api.get(`/reports/${id}`);
     return response.data;
   } catch (error) {
-    console.error("Error getting report", error);
+    throw error;
+  }
+};
+
+export const deleteReports = async (ids: string[]) => {
+  try {
+    const response = await api.post("/reports/delete", { ids });
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting reports", error);
     throw error;
   }
 };

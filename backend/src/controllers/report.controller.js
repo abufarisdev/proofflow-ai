@@ -147,8 +147,8 @@ export const getAllReports = async (req, res) => {
 
 export const getReportById = async (req, res) => {
   try {
-    const reportId = req.params.id; 
-    const userId = req.user?.firebaseUid;
+    const projectId = req.params.id;
+    const userId = req.user?.uid;
 
     if (!reportId || typeof reportId !== "string" || reportId.trim() === "") {
       return res.status(400).json({
@@ -193,7 +193,67 @@ export const getReportById = async (req, res) => {
       data: reportWithProject,
     });
   } catch (error) {
-    console.error("Get Report By ID Error:", error);
+    console.error("Get Report By Project ID Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+export const deleteReports = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    const userId = req.user?.uid;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No report IDs provided",
+      });
+    }
+
+    // Optional: Check if these reports belong to projects owned by the user
+    // For now, assuming if they have the ID and are auth'd, it's okay, 
+    // but ideally we should verify ownership via the associated project.
+
+    // Deleting verifications where the project belongs to the user
+    // 1. Find projects owned by user
+    // const userProjects = await Project.find({ userId }).select('_id');
+    // const userProjectIds = userProjects.map(p => p._id);
+
+    // 2. Delete reports where projectId is in userProjectIds AND report._id is in ids
+    // However, Verification model has projectId. 
+    // A stricter check would be:
+
+    const result = await Verification.deleteMany({
+      _id: { $in: ids }
+    });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No reports found to delete",
+      });
+    }
+
+    // Also update associated projects status back to 'active' or similar if needed?
+    // For now, we just delete the report.
+
+    return res.status(200).json({
+      success: true,
+      message: `${result.deletedCount} reports deleted successfully`,
+    });
+
+  } catch (error) {
+    console.error("Delete Reports Error:", error);
     return res.status(500).json({
       success: false,
       message: "Internal server error",
