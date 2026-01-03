@@ -16,6 +16,7 @@
     "nodemon": "^3.1.11"
   },
   "dependencies": {
+    "@genkit-ai/googleai": "^1.27.0",
     "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
@@ -24,6 +25,7 @@
     "express": "^5.2.1",
     "firebase": "^12.7.0",
     "firebase-admin": "^13.6.0",
+    "genkit": "^1.27.0",
     "jsonwebtoken": "^9.0.3"
   }
 }

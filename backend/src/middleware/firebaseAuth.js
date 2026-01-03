@@ -1,5 +1,5 @@
 import { admin, isFirebaseInitialized } from "../config/firebase.js";
-import { getUserById, createUser } from "../models/user.model.js";
+import { getUserById, createUser, updateUser } from "../models/user.model.js";
 
 const firebaseAuth = async (req, res, next) => {
   if (!isFirebaseInitialized()) {
@@ -16,19 +16,28 @@ const firebaseAuth = async (req, res, next) => {
     const token = header.split(" ")[1];
     const decoded = await admin.auth().verifyIdToken(token);
 
-    const { uid, email, name, picture } = decoded;
+    const { uid, email, name, picture, githubUsername: claimGithubUsername } = decoded;
     
-    // Try to get GitHub username from Firebase user record
-    let githubUsername = "";
+    // Prefer GitHub username from token claims (set during OAuth exchange). Fallback to Firebase user displayName if it looks like a username.
+    let githubUsername = claimGithubUsername || "";
     try {
       const firebaseUser = await admin.auth().getUser(uid);
-      // Check provider data for GitHub
-      const githubProvider = firebaseUser.providerData.find(
-        (provider) => provider.providerId === "github.com"
-      );
-      if (githubProvider) {
-        // Extract username from email or displayName
-        githubUsername = githubProvider.displayName || githubProvider.email?.split("@")[0] || "";
+
+      // If not present in claims, check customClaims directly (safety)
+      if (!githubUsername && firebaseUser.customClaims && firebaseUser.customClaims.githubUsername) {
+        githubUsername = firebaseUser.customClaims.githubUsername;
+      }
+
+      // Fallback to displayName only if it doesn't contain spaces (likely a login)
+      if (!githubUsername && firebaseUser.displayName && !/\s/.test(firebaseUser.displayName)) {
+        githubUsername = firebaseUser.displayName;
+      }
+
+      // If Firestore user exists but lacks githubUsername, update it for future requests
+      let existingUser = await getUserById(uid);
+      if (existingUser && !existingUser.githubUsername && githubUsername) {
+        await updateUser(uid, { githubUsername });
+        existingUser = await getUserById(uid);
       }
     } catch (err) {
       console.warn("Could not fetch Firebase user for GitHub username:", err.message);

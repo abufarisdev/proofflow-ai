@@ -3,8 +3,12 @@ import {
   getReportByProjectId, 
   createReport as createReportInDb,
   getReportsByUserId,
-  getReportById as getReportByIdFromDb
+  getReportById as getReportByIdFromDb,
+  deleteReport
 } from "../models/reports.model.js";
+import { getRepoCommitStats } from "../services/github.service.js";
+import { analyzeCommitStats } from "../services/report.service.js";
+import { getAIAssessment } from "../services/ai.service.js";
 
 export const createReport = async (req, res) => {
   try {
@@ -44,24 +48,53 @@ export const createReport = async (req, res) => {
       });
     }
 
-    // 4️⃣ Fetch real timeline later (currently empty)
-    const timeline = [];
+    // 4️⃣ Fetch commit stats from GitHub (owner/repo parsed from repoUrl)
+    let timeline = [];
+    let analysisResult = { confidenceScore: 0, flags: [], aiSummary: "Analysis not available" };
 
-    // 5️⃣ Compute confidence score
-    const confidenceScore = 0; // replace with real logic later
-    const flags = [];
+    try {
+      const stats = await getRepoCommitStats(project.repoUrl, { days: 180, perPage: 100 });
+      timeline = stats.timeline;
+      analysisResult = analyzeCommitStats(stats);
 
-    // 6️⃣ Create verification report
+      // Optional: call AI to augment or refine analysis
+      try {
+        const aiRes = await getAIAssessment(stats);
+        if (aiRes) {
+          // Merge results: prefer AI summary and combine flags. Average confidence as a simple merge strategy.
+          analysisResult.aiSummary = aiRes.aiSummary || analysisResult.aiSummary;
+          analysisResult.flags = Array.from(new Set([...(analysisResult.flags || []), ...(aiRes.flags || [])]));
+          if (typeof aiRes.confidenceScore === "number") {
+            analysisResult.confidenceScore = Math.round((analysisResult.confidenceScore + aiRes.confidenceScore) / 2);
+          }
+        }
+      } catch (err) {
+        console.warn("AI assessment failed, continuing with heuristic result", err.message || err);
+      }
+    } catch (err) {
+      console.warn("Failed to fetch commit stats for project:", project.id, err.message || err);
+      // Proceed with default analysisResult (0 score)
+    }
+
+    // 5️⃣ Create report in DB
     const report = await createReportInDb({
       projectId,
       timeline,
-      confidenceScore,
-      flags,
-      summary: "",
+      confidenceScore: analysisResult.confidenceScore,
+      flags: analysisResult.flags,
+      aiSummary: analysisResult.aiSummary,
     });
 
-    // 7️⃣ Update project status
-    await updateProject(projectId, { status: "pending" });
+    // 6️⃣ Update project status depending on confidence
+    const determineStatus = (score) => {
+      if (typeof score !== "number") return "pending";
+      if (score > 70) return "verified";
+      if (score < 40) return "flagged";
+      return "pending";
+    };
+
+    const newStatus = determineStatus(analysisResult.confidenceScore);
+    await updateProject(projectId, { status: newStatus });
 
     // 8️⃣ Return response
     return res.status(201).json({
@@ -147,8 +180,8 @@ export const getAllReports = async (req, res) => {
 
 export const getReportById = async (req, res) => {
   try {
-    const projectId = req.params.id;
-    const userId = req.user?.uid;
+    const reportId = req.params.id;
+    const userId = req.user?.firebaseUid;
 
     if (!reportId || typeof reportId !== "string" || reportId.trim() === "") {
       return res.status(400).json({
@@ -180,7 +213,7 @@ export const getReportById = async (req, res) => {
     // Add project info to the report
     const reportWithProject = {
       ...report,
-      projectId: {
+      project: {
         id: project.id,
         repoName: project.repoName,
         repoUrl: project.repoUrl,
@@ -193,7 +226,7 @@ export const getReportById = async (req, res) => {
       data: reportWithProject,
     });
   } catch (error) {
-    console.error("Get Report By Project ID Error:", error);
+    console.error("Get Report By ID Error:", error);
     return res.status(500).json({
       success: false,
       message: "Internal server error",
@@ -204,7 +237,7 @@ export const getReportById = async (req, res) => {
 export const deleteReports = async (req, res) => {
   try {
     const { ids } = req.body;
-    const userId = req.user?.uid;
+    const userId = req.user?.firebaseUid;
 
     if (!userId) {
       return res.status(401).json({
@@ -220,36 +253,37 @@ export const deleteReports = async (req, res) => {
       });
     }
 
-    // Optional: Check if these reports belong to projects owned by the user
-    // For now, assuming if they have the ID and are auth'd, it's okay, 
-    // but ideally we should verify ownership via the associated project.
+    let deletedCount = 0;
 
-    // Deleting verifications where the project belongs to the user
-    // 1. Find projects owned by user
-    // const userProjects = await Project.find({ userId }).select('_id');
-    // const userProjectIds = userProjects.map(p => p._id);
+    for (const id of ids) {
+      const report = await getReportByIdFromDb(id);
+      if (!report) continue;
 
-    // 2. Delete reports where projectId is in userProjectIds AND report._id is in ids
-    // However, Verification model has projectId. 
-    // A stricter check would be:
+      const project = await getProjectById(report.projectId);
+      if (!project || project.userId !== userId) continue;
 
-    const result = await Verification.deleteMany({
-      _id: { $in: ids }
-    });
+      await deleteReport(id);
+      deletedCount += 1;
 
-    if (result.deletedCount === 0) {
+      // Optionally set project back to pending
+      try {
+        await updateProject(project.id, { status: "pending" });
+      } catch (e) {
+        // Non-fatal
+        console.warn("Failed to update project status after report deletion", project.id, e.message);
+      }
+    }
+
+    if (deletedCount === 0) {
       return res.status(404).json({
         success: false,
-        message: "No reports found to delete",
+        message: "No reports found to delete or you don't have permission",
       });
     }
 
-    // Also update associated projects status back to 'active' or similar if needed?
-    // For now, we just delete the report.
-
     return res.status(200).json({
       success: true,
-      message: `${result.deletedCount} reports deleted successfully`,
+      message: `${deletedCount} reports deleted successfully`,
     });
 
   } catch (error) {
