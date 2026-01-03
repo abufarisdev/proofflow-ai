@@ -55,7 +55,7 @@ export const createReport = async (req, res) => {
     try {
       const stats = await getRepoCommitStats(project.repoUrl, { days: 180, perPage: 100 });
       timeline = stats.timeline;
-      analysisResult = analyzeCommitStats(stats);
+      analysisResult = await analyzeCommitStats(stats);
 
       // Optional: call AI to augment or refine analysis
       try {

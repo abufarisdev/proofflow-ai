@@ -121,6 +121,14 @@ export function ReportView({ reportId }: ReportViewProps) {
     );
   }
 
+  const {
+    detailedAnalysis = [],
+    authenticityMetrics = [],
+    timelineData = [],
+    flaggedIssues = [],
+    recommendations = [],
+  } = report;
+
   return (
     <div className="p-8 bg-background min-h-screen">
       {/* Header */}
@@ -175,7 +183,7 @@ export function ReportView({ reportId }: ReportViewProps) {
         <Card className="p-6">
           <h2 className="text-lg font-semibold text-foreground mb-6">Authenticity Metrics</h2>
           <ResponsiveContainer width="100%" height={300}>
-            <RadarChart data={report.authenticityMetrics}>
+            <RadarChart data={authenticityMetrics}>
               <PolarGrid stroke="hsl(var(--color-border))" />
               <PolarAngleAxis dataKey="metric" stroke="hsl(var(--color-muted-foreground))" />
               <PolarRadiusAxis stroke="hsl(var(--color-border))" />
@@ -194,7 +202,7 @@ export function ReportView({ reportId }: ReportViewProps) {
         <Card className="col-span-1 lg:col-span-2 p-6">
           <h2 className="text-lg font-semibold text-foreground mb-6">Development Timeline</h2>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={report.timelineData}>
+            <BarChart data={timelineData}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--color-border))" />
               <XAxis dataKey="phase" stroke="hsl(var(--color-muted-foreground))" />
               <YAxis stroke="hsl(var(--color-muted-foreground))" />
@@ -218,7 +226,7 @@ export function ReportView({ reportId }: ReportViewProps) {
         <Card className="col-span-1 lg:col-span-2 p-6">
           <h2 className="text-lg font-semibold text-foreground mb-6">Detailed Analysis Scores</h2>
           <div className="space-y-4">
-            {report.detailedAnalysis.map((item, index) => (
+            {detailedAnalysis.map((item, index) => (
               <div key={index}>
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm font-medium text-foreground">{item.name}</span>
@@ -239,7 +247,7 @@ export function ReportView({ reportId }: ReportViewProps) {
         <Card className="p-6">
           <h2 className="text-lg font-semibold text-foreground mb-6">Flagged Issues</h2>
           <div className="space-y-4">
-            {report.flaggedIssues.map((issue) => (
+            {flaggedIssues.map((issue) => (
               <div
                 key={issue.id}
                 className={`p-4 rounded-lg border-l-4 ${issue.severity === "high"
@@ -262,7 +270,7 @@ export function ReportView({ reportId }: ReportViewProps) {
       <Card className="p-6">
         <h2 className="text-lg font-semibold text-foreground mb-4">Recommendations</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {report.recommendations.map((rec, index) => (
+          {recommendations.map((rec, index) => (
             <div key={index} className="p-4 rounded-lg bg-muted">
               <p className="font-medium text-foreground text-sm mb-2">{rec.title}</p>
               <p className="text-xs text-muted-foreground">{rec.description}</p>

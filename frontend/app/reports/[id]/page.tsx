@@ -1,15 +1,13 @@
-'use client';
-
 import { ReportView } from '@/components/report-view';
 import { Sidebar } from '@/components/sidebar';
 import { AuthGuard } from '@/components/auth-guard';
 
 type Props = {
-    params: Promise<{ id: string }>
+    params: { id: string }
 }
 
 export default async function ReportDetailPage({ params }: Props) {
-    const { id } = await params;
+    const { id } = params;
 
     return (
         <AuthGuard requireAuth={true}>
