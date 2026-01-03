@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Eye, Folder, Plus, Trash2, GitBranch, Calendar, Search, Sparkles, Zap, Shield } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -15,40 +15,17 @@ import { Textarea } from "@/components/ui/textarea"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { motion, AnimatePresence } from "framer-motion"
 import ParticleBackground from "./ParticleBackground"
-
-// Mock data
-const INITIAL_PROJECTS = [
-    {
-        id: "1",
-        name: "ProofFlow AI",
-        repoUrl: "https://github.com/abufarisdev/proofflow-ai",
-        status: "active",
-        createdAt: "2025-12-01",
-        description: "AI-powered code authenticity platform"
-    },
-    {
-        id: "2",
-        name: "E-Commerce V2",
-        repoUrl: "https://github.com/client-a/shop-v2",
-        status: "archived",
-        createdAt: "2025-11-15",
-        description: "Next.js e-commerce storefront"
-    },
-    {
-        id: "3",
-        name: "Legacy CRM",
-        repoUrl: "https://github.com/internal/crm-legacy",
-        status: "maintenance",
-        createdAt: "2025-10-10",
-        description: "Old CRM system needing migration"
-    }
-]
+import { createProject, getAllProjects } from "@/services/projectService"
+import { toast } from "@/hooks/use-toast"
+import { Project } from "@/types"
 
 export function ProjectsList() {
-    const [projects, setProjects] = useState(INITIAL_PROJECTS)
+    const [projects, setProjects] = useState<Project[]>([])
+    const [loading, setLoading] = useState(true)
     const [selectedProjects, setSelectedProjects] = useState<string[]>([])
     const [isCreateOpen, setIsCreateOpen] = useState(false)
     const [isDeleteOpen, setIsDeleteOpen] = useState(false)
+    const [creating, setCreating] = useState(false)
 
     // New Project State
     const [newProjectName, setNewProjectName] = useState("")
@@ -56,6 +33,38 @@ export function ProjectsList() {
     const [newProjectDesc, setNewProjectDesc] = useState("")
     const [nameError, setNameError] = useState("")
     const [repoError, setRepoError] = useState("")
+
+    useEffect(() => {
+        fetchProjects()
+    }, [])
+
+    const fetchProjects = async () => {
+        try {
+            const response = await getAllProjects()
+            if (response.success) {
+                // Map backend data to frontend format
+                const mappedProjects: Project[] = response.projects.map((project: any) => ({
+                    id: project.id,
+                    name: project.repoName,
+                    repoName: project.repoName,
+                    repoUrl: project.repoUrl,
+                    status: "active" as Project['status'], // Default status since backend doesn't have it
+                    createdAt: project.createdAt?.toDate ? project.createdAt.toDate().toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+                    description: project.description || ""
+                }))
+                setProjects(mappedProjects)
+            }
+        } catch (error) {
+            console.error("Error fetching projects:", error)
+            toast({
+                title: "Error",
+                description: "Failed to load projects",
+                variant: "destructive"
+            })
+        } finally {
+            setLoading(false)
+        }
+    }
 
     // Selection Logic
     const handleSelectAll = (checked: boolean) => {
@@ -82,7 +91,7 @@ export function ProjectsList() {
     }
 
     // Create Logic
-    const handleCreateProject = () => {
+    const handleCreateProject = async () => {
         // Validation
         let isValid = true
         setNameError("")
@@ -101,18 +110,42 @@ export function ProjectsList() {
 
         if (!isValid) return
 
-        const newProject = {
-            id: Date.now().toString(),
-            name: newProjectName,
-            repoUrl: newProjectRepo,
-            status: "active",
-            createdAt: new Date().toISOString().split('T')[0],
-            description: newProjectDesc
-        }
+        setCreating(true)
+        try {
+            const response = await createProject({
+                repoName: newProjectName,
+                repoUrl: newProjectRepo,
+                description: newProjectDesc
+            })
 
-        setProjects([newProject, ...projects])
-        setIsCreateOpen(false)
-        resetForm()
+            if (response.success) {
+                // Add the new project to the list
+                const newProject = {
+                    id: response.project.id,
+                    name: response.project.repoName,
+                    repoUrl: response.project.repoUrl,
+                    status: "active",
+                    createdAt: response.project.createdAt?.toDate ? response.project.createdAt.toDate().toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+                    description: response.project.description || ""
+                }
+                setProjects([newProject, ...projects])
+                setIsCreateOpen(false)
+                resetForm()
+                toast({
+                    title: "Success",
+                    description: "Project created successfully"
+                })
+            }
+        } catch (error) {
+            console.error("Error creating project:", error)
+            toast({
+                title: "Error",
+                description: "Failed to create project",
+                variant: "destructive"
+            })
+        } finally {
+            setCreating(false)
+        }
     }
 
     const resetForm = () => {
@@ -222,7 +255,13 @@ export function ProjectsList() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {projects.length === 0 ? (
+                                    {loading ? (
+                                        <TableRow className="border-white/10 hover:bg-white/5">
+                                            <TableCell colSpan={6} className="h-32 text-center text-gray-400">
+                                                Loading projects...
+                                            </TableCell>
+                                        </TableRow>
+                                    ) : projects.length === 0 ? (
                                         <TableRow className="border-white/10 hover:bg-white/5">
                                             <TableCell colSpan={6} className="h-32 text-center text-gray-400">
                                                 No projects found. Create one to get started.
@@ -381,9 +420,10 @@ export function ProjectsList() {
                             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                                 <Button 
                                     onClick={handleCreateProject}
+                                    disabled={creating}
                                     className="bg-gradient-to-r from-purple-600 to-pink-600 border-none hover:shadow-lg hover:shadow-purple-500/30"
                                 >
-                                    Create Project
+                                    {creating ? "Creating..." : "Create Project"}
                                 </Button>
                             </motion.div>
                         </DialogFooter>

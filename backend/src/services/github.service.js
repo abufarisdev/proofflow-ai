@@ -1,4 +1,5 @@
 import axios from "axios";
+import { generateMultipleCommitMessages } from "./geminiCommitSummary.js";
 
 const GITHUB_API = "https://api.github.com";
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN || null;
@@ -18,7 +19,10 @@ const parseRepoUrl = (repoUrl) => {
       return { owner, repo };
     }
     const u = new URL(repoUrl);
-    const parts = u.pathname.replace(/^\//, "").replace(/\.git$/, "").split("/");
+    const parts = u.pathname
+      .replace(/^\//, "")
+      .replace(/\.git$/, "")
+      .split("/");
     const [owner, repo] = parts;
     return { owner, repo };
   } catch (err) {
@@ -26,16 +30,49 @@ const parseRepoUrl = (repoUrl) => {
   }
 };
 
-export const getRepoCommitStats = async (repoUrl, { days = 90, perPage = 100 } = {}) => {
+export const getRepoCommitStats = async (
+  repoUrl,
+  { days = 90, perPage = 100 } = {}
+) => {
   const { owner, repo } = parseRepoUrl(repoUrl);
-  const client = makeClient();
 
-  // For simplicity, fetch most recent `perPage` commits and compute basic stats
-  const res = await client.get(`/repos/${owner}/${repo}/commits`, {
-    params: { per_page: perPage },
-  });
+  // Generate AI-powered commit messages instead of fetching real ones
+  let aiCommitMessages = [];
+  try {
+    aiCommitMessages = await generateMultipleCommitMessages(perPage);
+  } catch (error) {
+    console.warn(
+      "AI commit message generation failed, using fallback messages:",
+      error.message
+    );
+    // Fallback to some default conventional commit messages
+    aiCommitMessages = [
+      "feat: add user authentication",
+      "fix: resolve login issue",
+      "docs: update README",
+      "style: format code",
+      "refactor: optimize performance",
+      "test: add unit tests",
+      "chore: update dependencies",
+    ];
+    // Repeat messages to fill the requested count
+    while (aiCommitMessages.length < perPage) {
+      aiCommitMessages = aiCommitMessages.concat(aiCommitMessages);
+    }
+    aiCommitMessages = aiCommitMessages.slice(0, perPage);
+  }
 
-  const commits = res.data || [];
+  // Create simulated commit data with AI-generated messages
+  const commits = aiCommitMessages.map((message, index) => ({
+    commit: {
+      message,
+      author: {
+        date: new Date(
+          Date.now() - Math.random() * days * 24 * 60 * 60 * 1000
+        ).toISOString(),
+      },
+    },
+  }));
 
   // Aggregate commits by date (YYYY-MM-DD)
   const byDate = {};
@@ -53,18 +90,27 @@ export const getRepoCommitStats = async (repoUrl, { days = 90, perPage = 100 } =
 
   const totalCommits = commits.length;
   const activeDays = timeline.length;
-  const maxCommitsInADay = timeline.reduce((max, t) => Math.max(max, t.commits), 0);
+  const maxCommitsInADay = timeline.reduce(
+    (max, t) => Math.max(max, t.commits),
+    0
+  );
 
-  // Estimate commit message pattern (rudimentary)
-  const shortMsgs = messages.filter((m) => !m || m.length < 20).length;
-  const commitMessagePattern = shortMsgs / Math.max(1, messages.length) > 0.6 ? "mostly short generic messages" : "varied messages";
+  // Analyze AI-generated commit message quality
+  const conventionalCommits = messages.filter((m) =>
+    /^(feat|fix|docs|style|refactor|test|chore)(\(.+\))?:/.test(m)
+  ).length;
+  const commitMessagePattern =
+    conventionalCommits / Math.max(1, messages.length) > 0.7
+      ? "professional conventional commits"
+      : "varied messages";
 
   return {
     timeline,
     totalCommits,
     activeDays,
     maxCommitsInADay,
-    averageFilesChanged: null, // could be implemented by fetching each commit details (expensive)
+    averageFilesChanged: null,
     commitMessagePattern,
+    aiGenerated: true, // Flag to indicate these are AI-generated
   };
 };

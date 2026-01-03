@@ -55,14 +55,14 @@ export function ReportsList() {
         try {
             setLoading(true)
             const response: any = await getReports()
-            if (response?.data && Array.isArray(response.data)) {
+            if (response?.success && response?.data && Array.isArray(response.data)) {
                 const mappedReports: Report[] = response.data.map((item: any) => ({
-                    id: item._id,
-                    name: item.projectId?.repoName || 'Unknown Project',
-                    repoUrl: item.projectId?.repoUrl || '',
-                    status: (item.projectId?.status || 'pending') as Report['status'],
+                    id: item.id,
+                    name: item.project?.repoName || 'Unknown Project',
+                    repoUrl: item.project?.repoUrl || '',
+                    status: (item.project?.status || 'pending') as Report['status'],
                     confidence: item.confidenceScore || 0,
-                    createdAt: item.createdAt || new Date().toISOString(),
+                    createdAt: item.createdAt?.toDate ? item.createdAt.toDate().toISOString() : item.createdAt || new Date().toISOString(),
                     action: 'Report Generated'
                 }))
                 setReports(mappedReports)
@@ -82,8 +82,8 @@ export function ReportsList() {
     const fetchProjects = async () => {
         try {
             const response: any = await getAllProjects()
-            if (response?.data) {
-                setProjects(response.data)
+            if (response?.success && response?.projects) {
+                setProjects(response.projects)
             }
         } catch (error) {
             console.error("Failed to fetch projects", error)
@@ -521,7 +521,7 @@ export function ReportsList() {
                                             <SelectItem value="none" disabled>No projects found</SelectItem>
                                         ) : (
                                             projects.map((project: any) => (
-                                                <SelectItem key={project._id} value={project._id} className="hover:bg-white/10">
+                                                <SelectItem key={project.id} value={project.id} className="hover:bg-white/10">
                                                     {project.repoName}
                                                 </SelectItem>
                                             ))
