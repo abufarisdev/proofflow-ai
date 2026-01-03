@@ -75,23 +75,56 @@ export const exchangeCodeForToken = async (req, res) => {
       return res.status(500).json({ error: "Firebase is not initialized. Please check server configuration." });
     }
 
-    // Create Firebase custom token
-    const firebaseToken = await admin.auth().createCustomToken(email, {
-      provider: "github",
-      githubId: githubUser.id,
-      githubUsername: githubUser.login,
-    });
+    // Create or update Firebase user and set github info as custom claims
+    try {
+      let firebaseUid;
+      let firebaseUserRecord;
+      try {
+        firebaseUserRecord = await admin.auth().getUserByEmail(email);
+      } catch (err) {
+        if (err.code === "auth/user-not-found") {
+          firebaseUserRecord = await admin.auth().createUser({
+            email,
+            displayName: githubUser.login,
+            photoURL: githubUser.avatar_url,
+          });
+        } else {
+          throw err;
+        }
+      }
+      firebaseUid = firebaseUserRecord.uid;
 
-    res.json({
-      access_token,
-      firebase_token: firebaseToken,
-      user: {
-        id: githubUser.id,
-        username: githubUser.login,
-        email,
-        avatar_url: githubUser.avatar_url,
-      },
-    });
+      // Update user record with latest GitHub info
+      await admin.auth().updateUser(firebaseUid, {
+        displayName: githubUser.login,
+        photoURL: githubUser.avatar_url,
+      });
+
+      // Set custom claims so middleware can read the GitHub username reliably
+      await admin.auth().setCustomUserClaims(firebaseUid, {
+        provider: "github",
+        githubId: githubUser.id,
+        githubUsername: githubUser.login,
+      });
+
+      // Create custom token for the Firebase uid
+      const firebaseToken = await admin.auth().createCustomToken(firebaseUid);
+
+      res.json({
+        access_token,
+        firebase_token: firebaseToken,
+        user: {
+          id: githubUser.id,
+          firebaseUid,
+          username: githubUser.login,
+          email,
+          avatar_url: githubUser.avatar_url,
+        },
+      });
+    } catch (err) {
+      console.error("Error creating/updating Firebase user", err);
+      return res.status(500).json({ error: "Failed to create or update Firebase user" });
+    }
   } catch (error) {
     console.error("Error exchanging code for token", error);
     res.status(500).json({ error: "Failed to exchange code for token" });

@@ -8,7 +8,7 @@ export interface CreateProjectData {
 
 export const createProject = async (data: CreateProjectData) => {
     try {
-        const response = await api.post("/projects/create", data);
+        const response = await api.post("/projects", data);
         return response.data;
     } catch (error) {
         console.error("Error creating project", error);

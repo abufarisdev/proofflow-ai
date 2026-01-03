@@ -1,3 +1,13 @@
+export interface Project {
+    id: string;
+    name: string;
+    repoName: string;
+    repoUrl: string;
+    status: 'active' | 'archived' | 'maintenance' | 'pending';
+    createdAt: string;
+    description?: string;
+}
+
 export interface Report {
     id: string;
     name: string;
