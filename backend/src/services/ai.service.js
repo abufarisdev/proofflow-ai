@@ -1,77 +1,136 @@
 // backend/src/services/ai.service.js
-// Optional Gemini integration (uses aggregated stats only)
+// Optional Gemini integration (aggregated stats only)
 
+/* ================= CONFIG ================= */
+const AI_TIMEOUT_MS = 30_000;
+const MAX_CONCURRENT_AI = 1;
+const MAX_AI_CALLS_PER_MIN = 5;
+
+let activeAIRequests = 0;
+let aiCallTimestamps = [];
+
+/* ================= RATE LIMIT ================= */
+function canCallAI() {
+  const now = Date.now();
+  aiCallTimestamps = aiCallTimestamps.filter((t) => now - t < 60_000);
+
+  if (activeAIRequests >= MAX_CONCURRENT_AI) return false;
+  if (aiCallTimestamps.length >= MAX_AI_CALLS_PER_MIN) return false;
+
+  aiCallTimestamps.push(now);
+  return true;
+}
+
+/* ================= AI CALL WITH TIMEOUT ================= */
+async function callWithTimeout(fn) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
+
+  try {
+    return await fn(controller.signal);
+  } catch (err) {
+    if (err.name === "AbortError") {
+      console.warn("AI request timed out (30s)");
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+/* ================= MAIN FUNCTION ================= */
 export const getAIAssessment = async (stats) => {
-  // Only run if explicitly enabled
   if (!process.env.USE_GEMINI || process.env.USE_GEMINI === "false") {
     return null;
   }
 
-  try {
-    // Build a concise prompt with only aggregated statistics (no raw code)
-    const prompt = `You are a helpful reviewer. Given the project commit statistics, provide a JSON object with: confidenceScore (0-100), flags (array of short strings), aiSummary (one sentence).\n\nStats:\n${JSON.stringify(stats, null, 2)}`;
-
-    // Try to dynamically import genkit/googleai client (best-effort). If import fails, bail gracefully.
-    let genkitClient = null;
-    try {
-      // Preferred import if available
-      const { createClient } = await import("genkit");
-      genkitClient = createClient({ provider: "google", apiKey: process.env.GOOGLE_API_KEY });
-    } catch (e1) {
-      try {
-        // Fallback: import direct package
-        const googleai = await import("@genkit-ai/googleai");
-        if (googleai && googleai.GoogleAI) {
-          genkitClient = new googleai.GoogleAI({ apiKey: process.env.GOOGLE_API_KEY });
-        }
-      } catch (e2) {
-        console.warn("AI client import failed:", e1.message || e1, e2?.message || e2);
-        return null;
-      }
-    }
-
-    if (!genkitClient) return null;
-
-    // Make a best-effort call to the model. The exact client API may vary between versions — use try/catch.
-    let modelResponseText = null;
-    try {
-      // Try common GenKit client patterns
-      if (genkitClient.chat && typeof genkitClient.chat.create === "function") {
-        const out = await genkitClient.chat.create({ model: process.env.GEMINI_MODEL || "gpt-4o-mini", messages: [{ role: "user", content: prompt }] });
-        modelResponseText = out?.choices?.[0]?.message?.content || out?.output || out?.choices?.[0]?.text || null;
-      } else if (typeof genkitClient.createText === "function") {
-        const out = await genkitClient.createText({ model: process.env.GEMINI_MODEL || "gpt-4o-mini", input: prompt });
-        modelResponseText = out?.output || out?.text || null;
-      } else {
-        console.warn("AI client has unexpected API shape; skipping AI analysis");
-        return null;
-      }
-    } catch (err) {
-      console.warn("AI model call failed:", err.message || err);
-      return null;
-    }
-
-    if (!modelResponseText) return null;
-
-    // Attempt to extract JSON blob from response
-    const jsonMatch = modelResponseText.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      console.warn("AI response did not contain JSON");
-      return null;
-    }
-
-    const parsed = JSON.parse(jsonMatch[0]);
-
-    // Validate and normalize
-    const res = {
-      confidenceScore: typeof parsed.confidenceScore === "number" ? Math.max(0, Math.min(100, Math.round(parsed.confidenceScore))) : undefined,
-      flags: Array.isArray(parsed.flags) ? parsed.flags.slice(0, 10) : undefined,
-      aiSummary: typeof parsed.aiSummary === "string" ? parsed.aiSummary : undefined,
-    };
-
-    return res;
-  } catch (err) {
-    console.error("AIAssessment error:", err.message || err);
+  if (!canCallAI()) {
+    console.warn("AI rate limit hit — skipping AI assessment");
     return null;
+  }
+
+  activeAIRequests++;
+
+  try {
+    const prompt = `
+You are a reviewer.
+
+Return STRICT JSON with:
+{
+  "confidenceScore": number (0-100),
+  "flags": string[],
+  "aiSummary": string
+}
+
+Commit Stats:
+${JSON.stringify(stats, null, 2)}
+`;
+
+    // Try importing Genkit safely
+    let client = null;
+
+    try {
+      const { createClient } = await import("genkit");
+      client = createClient({
+        provider: "google",
+        apiKey: process.env.GOOGLE_API_KEY,
+      });
+    } catch {
+      try {
+        const googleai = await import("@genkit-ai/googleai");
+        if (googleai?.GoogleAI) {
+          client = new googleai.GoogleAI({
+            apiKey: process.env.GOOGLE_API_KEY,
+          });
+        }
+      } catch (e) {
+        console.warn("Gemini client unavailable:", e.message);
+        return null;
+      }
+    }
+
+    if (!client) return null;
+
+    const rawText = await callWithTimeout(async () => {
+      if (client.chat?.create) {
+        const out = await client.chat.create({
+          model: process.env.GEMINI_MODEL || "gemini-2.5-flash-lite",
+          messages: [{ role: "user", content: prompt }],
+        });
+        return out?.choices?.[0]?.message?.content;
+      }
+
+      if (client.createText) {
+        const out = await client.createText({
+          model: process.env.GEMINI_MODEL || "gemini-2.5-flash-lite",
+          input: prompt,
+        });
+        return out?.output || out?.text;
+      }
+
+      return null;
+    });
+
+    if (!rawText) return null;
+
+    const match = rawText.match(/\{[\s\S]*\}/);
+    if (!match) return null;
+
+    const parsed = JSON.parse(match[0]);
+
+    return {
+      confidenceScore:
+        typeof parsed.confidenceScore === "number"
+          ? Math.max(0, Math.min(100, Math.round(parsed.confidenceScore)))
+          : undefined,
+      flags: Array.isArray(parsed.flags) ? parsed.flags.slice(0, 10) : [],
+      aiSummary:
+        typeof parsed.aiSummary === "string" ? parsed.aiSummary : undefined,
+    };
+  } catch (err) {
+    console.warn("AI assessment failed:", err.message || err);
+    return null;
+  } finally {
+    activeAIRequests--;
   }
 };
