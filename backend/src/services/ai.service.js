@@ -40,9 +40,7 @@ async function callWithTimeout(fn) {
 
 /* ================= MAIN FUNCTION ================= */
 export const getAIAssessment = async (stats) => {
-  if (!process.env.USE_GEMINI || process.env.USE_GEMINI === "false") {
-    return null;
-  }
+  if (process.env.USE_GEMINI === "false") return null;
 
   if (!canCallAI()) {
     console.warn("AI rate limit hit — skipping AI assessment");
@@ -53,11 +51,10 @@ export const getAIAssessment = async (stats) => {
 
   try {
     const prompt = `
-You are a reviewer.
+Return STRICT JSON only:
 
-Return STRICT JSON with:
 {
-  "confidenceScore": number (0-100),
+  "confidenceScore": number,
   "flags": string[],
   "aiSummary": string
 }
@@ -66,49 +63,23 @@ Commit Stats:
 ${JSON.stringify(stats, null, 2)}
 `;
 
-    // Try importing Genkit safely
     let client = null;
 
     try {
-      const { createClient } = await import("genkit");
-      client = createClient({
-        provider: "google",
-        apiKey: process.env.GOOGLE_API_KEY,
-      });
-    } catch {
-      try {
-        const googleai = await import("@genkit-ai/googleai");
-        if (googleai?.GoogleAI) {
-          client = new googleai.GoogleAI({
-            apiKey: process.env.GOOGLE_API_KEY,
-          });
-        }
-      } catch (e) {
-        console.warn("Gemini client unavailable:", e.message);
-        return null;
-      }
+      const { GoogleGenerativeAI } = await import("@google/generative-ai");
+      client = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+    } catch (e) {
+      console.warn("Gemini client unavailable:", e.message);
+      return null;
     }
 
-    if (!client) return null;
+    const model = client.getGenerativeModel({
+      model: process.env.GEMINI_MODEL || "gemini-2.5-flash-lite",
+    });
 
     const rawText = await callWithTimeout(async () => {
-      if (client.chat?.create) {
-        const out = await client.chat.create({
-          model: process.env.GEMINI_MODEL || "gemini-2.5-flash-lite",
-          messages: [{ role: "user", content: prompt }],
-        });
-        return out?.choices?.[0]?.message?.content;
-      }
-
-      if (client.createText) {
-        const out = await client.createText({
-          model: process.env.GEMINI_MODEL || "gemini-2.5-flash-lite",
-          input: prompt,
-        });
-        return out?.output || out?.text;
-      }
-
-      return null;
+      const res = await model.generateContent(prompt);
+      return res?.response?.text?.();
     });
 
     if (!rawText) return null;
@@ -119,16 +90,16 @@ ${JSON.stringify(stats, null, 2)}
     const parsed = JSON.parse(match[0]);
 
     return {
-      confidenceScore:
-        typeof parsed.confidenceScore === "number"
-          ? Math.max(0, Math.min(100, Math.round(parsed.confidenceScore)))
-          : undefined,
+      confidenceScore: Math.max(
+        0,
+        Math.min(100, Number(parsed.confidenceScore) || 0),
+      ),
       flags: Array.isArray(parsed.flags) ? parsed.flags.slice(0, 10) : [],
       aiSummary:
         typeof parsed.aiSummary === "string" ? parsed.aiSummary : undefined,
     };
   } catch (err) {
-    console.warn("AI assessment failed:", err.message || err);
+    console.warn("AI assessment failed:", err.message);
     return null;
   } finally {
     activeAIRequests--;
