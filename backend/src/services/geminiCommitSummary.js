@@ -1,5 +1,13 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
+/* ================= CONFIG ================= */
+const MAX_CONCURRENT_REQUESTS = 2; // 🔒 at most 2 Gemini calls at once
+const MAX_REQUESTS_PER_MIN = 10; // 🔒 per server instance
+const AI_TIMEOUT_MS = 30_000; // ⏱ 30 seconds
+
+let activeRequests = 0;
+let requestTimestamps = [];
+
 /* ================= INIT SAFELY ================= */
 function getGeminiClient() {
   if (!process.env.GEMINI_API_KEY) {
@@ -8,15 +16,60 @@ function getGeminiClient() {
   return new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 }
 
+/* ================= RATE LIMIT GUARD ================= */
+function canProceedWithAI() {
+  const now = Date.now();
+
+  // Remove timestamps older than 1 minute
+  requestTimestamps = requestTimestamps.filter((t) => now - t < 60_000);
+
+  if (activeRequests >= MAX_CONCURRENT_REQUESTS) return false;
+  if (requestTimestamps.length >= MAX_REQUESTS_PER_MIN) return false;
+
+  requestTimestamps.push(now);
+  return true;
+}
+
+/* ================= GEMINI CALL WRAPPER ================= */
+async function callGeminiWithTimeout(model, prompt) {
+  if (!canProceedWithAI()) {
+    throw new Error("AI rate limit exceeded");
+  }
+
+  activeRequests++;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
+
+  try {
+    const result = await model.generateContent(prompt, {
+      signal: controller.signal,
+    });
+
+    const text = result?.response?.text?.();
+    if (!text) throw new Error("Empty AI response");
+
+    return text.trim();
+  } catch (err) {
+    if (err.name === "AbortError") {
+      throw new Error("AI request timed out (30s)");
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeout);
+    activeRequests--;
+  }
+}
+
 /* ================= AI SUMMARY ================= */
 export async function generateCommitAISummary(data) {
-  const genAI = getGeminiClient();
+  try {
+    const genAI = getGeminiClient();
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.5-flash-lite",
+    });
 
-  const model = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash", // ✅ faster & stable
-  });
-
-  const prompt = `
+    const prompt = `
 You are a senior software engineering reviewer.
 
 Analyze the following Git commit statistics and write a professional,
@@ -38,23 +91,19 @@ Rules:
 - 2–3 sentences only
 `;
 
-  const result = await model.generateContent(prompt);
-
-  const text = result?.response?.text?.();
-  if (!text) {
-    throw new Error("Empty AI summary response");
+    return await callGeminiWithTimeout(model, prompt);
+  } catch (error) {
+    console.warn("AI summary skipped:", error.message);
+    return "Development activity analysis is currently unavailable.";
   }
-
-  return text.trim();
 }
 
 /* ================= AI COMMIT MESSAGE ================= */
 export async function generateAICommitMessage(commitData) {
   try {
     const genAI = getGeminiClient();
-
     const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
+      model: "gemini-2.5-flash-lite",
     });
 
     const prompt = `
@@ -73,17 +122,14 @@ Rules:
 - Single line only
 `;
 
-    const result = await model.generateContent(prompt);
-    const text = result?.response?.text?.();
-
-    if (!text) throw new Error("Empty commit message");
+    const text = await callGeminiWithTimeout(model, prompt);
 
     return text
       .replace(/^["']|["']$/g, "")
       .split("\n")[0]
       .trim();
   } catch (error) {
-    console.error("AI commit message failed:", error.message);
+    console.warn("AI commit message fallback:", error.message);
     return `${commitData.type}: ${commitData.description}`;
   }
 }
@@ -92,27 +138,8 @@ Rules:
 export async function generateMultipleCommitMessages(count = 10) {
   const messages = [];
 
-  const commitTypes = [
-    { type: "feat", description: "add new functionality" },
-    { type: "fix", description: "resolve bug or issue" },
-    { type: "refactor", description: "improve code structure" },
-    { type: "docs", description: "update documentation" },
-    { type: "style", description: "format code styling" },
-    { type: "test", description: "add or update tests" },
-    { type: "chore", description: "maintenance tasks" },
-  ];
-
   for (let i = 0; i < count; i++) {
-    const random = commitTypes[Math.floor(Math.random() * commitTypes.length)];
-
-    const commitData = {
-      files: "src/",
-      type: random.type,
-      description: random.description,
-    };
-
-    const message = await generateAICommitMessage(commitData);
-    messages.push(message);
+    messages.push(`chore: maintenance update`);
   }
 
   return messages;

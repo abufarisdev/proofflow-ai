@@ -58,15 +58,35 @@ export function Dashboard() {
     getReports()
       .then((response: any) => {
         if (response?.data && Array.isArray(response.data)) {
-          const mappedReports: Report[] = response.data.map((item: any) => ({
-            id: item._id,
-            name: item.projectId?.repoName || 'Unknown Project',
-            repoUrl: item.projectId?.repoUrl || '',
-            status: (item.projectId?.status || 'pending') as Report['status'],
-            confidence: item.confidenceScore || 0,
-            createdAt: item.createdAt || new Date().toISOString(),
-            action: 'Report Generated'
-          }));
+          const mappedReports: Report[] = response.data.map((item: any) => {
+            const id = item.id || item._id || '';
+            const project = item.project || item.projectId || {};
+
+            const name = project.repoName || project.name || 'Unknown Project';
+            const repoUrl = project.repoUrl || '';
+            const status = (project.status || 'pending') as Report['status'];
+            const confidence = item.confidenceScore ?? item.confidence ?? 0;
+
+            // Normalize Firestore timestamps (supports .toDate(), seconds) or ISO strings
+            const createdAt = item.createdAt?.toDate
+              ? item.createdAt.toDate().toISOString()
+              : item.createdAt?.seconds
+                ? new Date(item.createdAt.seconds * 1000).toISOString()
+                : typeof item.createdAt === 'string'
+                  ? item.createdAt
+                  : new Date().toISOString();
+
+            return {
+              id,
+              name,
+              repoUrl,
+              status,
+              confidence,
+              createdAt,
+              action: item.action || 'Report Generated',
+            };
+          });
+
           // Sort by date desc - ensure valid dates
           mappedReports.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
           setReports(mappedReports);
