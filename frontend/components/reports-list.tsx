@@ -394,7 +394,20 @@ export function ReportsList() {
                                         ) : reports.length === 0 ? (
                                             <TableRow className="border-white/10">
                                                 <TableCell colSpan={7} className="h-32 text-center text-gray-400">
-                                                    No reports found. Generate one to get started.
+                                                    <div className="flex flex-col items-center justify-center p-8 text-center">
+                                                        <div className="w-16 h-16 bg-gradient-to-br from-purple-600/20 via-pink-600/20 to-indigo-600/20 rounded-full flex items-center justify-center mb-4 backdrop-blur-sm border border-white/10">
+                                                            <FileText className="w-8 h-8 text-purple-400" />
+                                                        </div>
+                                                        <h3 className="text-lg font-semibold text-white mb-2">No reports found</h3>
+                                                        <p className="text-gray-400 mb-6 max-w-sm">Generate your first report to see analysis results</p>
+                                                        <Button
+                                                            onClick={() => setIsCreateOpen(true)}
+                                                            className="bg-gradient-to-r from-purple-600 to-pink-600 border-none hover:shadow-lg hover:shadow-purple-500/30"
+                                                        >
+                                                            <Plus size={16} className="mr-2" />
+                                                            Generate Report
+                                                        </Button>
+                                                    </div>
                                                 </TableCell>
                                             </TableRow>
                                         ) : (
@@ -422,7 +435,10 @@ export function ReportsList() {
                                                             <div className="p-2 bg-gradient-to-br from-purple-600/20 to-pink-600/20 rounded-lg group-hover:scale-110 transition-transform duration-300">
                                                                 <FileText size={16} className="text-purple-400" />
                                                             </div>
-                                                            <span className="text-white whitespace-nowrap">{report.name}</span>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-white whitespace-nowrap font-medium">{report.name}</span>
+                                                                <span className="text-xs text-gray-400">Project Analysis</span>
+                                                            </div>
                                                         </motion.div>
                                                     </TableCell>
                                                     <TableCell>
@@ -473,14 +489,17 @@ export function ReportsList() {
                                                     </TableCell>
                                                     <TableCell className="text-right">
                                                         <motion.div whileHover={{ scale: 1.05 }}>
-                                                            <Link href={`/reports/${report.id}`}>
+                                                            <Link 
+                                                                href={`/reports/${report.id}`}
+                                                                className="inline-flex items-center gap-2 text-sm text-purple-400 hover:text-purple-300 transition-colors"
+                                                            >
                                                                 <Button 
                                                                     variant="ghost" 
                                                                     size="sm" 
                                                                     className="bg-gradient-to-r from-purple-600/10 to-pink-600/10 hover:from-purple-600/20 hover:to-pink-600/20 text-purple-400 hover:text-purple-300 border border-purple-500/20 hover:border-purple-500/40"
                                                                 >
                                                                     <Eye size={16} className="mr-2" />
-                                                                    View
+                                                                    View Details
                                                                 </Button>
                                                             </Link>
                                                         </motion.div>

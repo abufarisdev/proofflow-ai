@@ -1,116 +1,145 @@
 import axios from "axios";
-import { generateMultipleCommitMessages } from "./geminiCommitSummary.js";
 
 const GITHUB_API = "https://api.github.com";
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN || null;
 
 const makeClient = () => {
-  const headers = { Accept: "application/vnd.github.v3+json" };
-  if (GITHUB_TOKEN) headers.Authorization = `Bearer ${GITHUB_TOKEN}`;
-  return axios.create({ baseURL: GITHUB_API, headers, timeout: 10000 });
+  const headers = {
+    Accept: "application/vnd.github+json",
+  };
+  if (GITHUB_TOKEN) {
+    headers.Authorization = `Bearer ${GITHUB_TOKEN}`;
+  }
+  return axios.create({
+    baseURL: GITHUB_API,
+    headers,
+    timeout: 10000,
+  });
 };
 
 const parseRepoUrl = (repoUrl) => {
-  // Accept formats like https://github.com/owner/repo or git@github.com:owner/repo.git
   try {
     if (repoUrl.startsWith("git@")) {
       const parts = repoUrl.split(":")[1];
       const [owner, repo] = parts.replace(/\.git$/, "").split("/");
       return { owner, repo };
     }
+
     const u = new URL(repoUrl);
-    const parts = u.pathname
+    const [owner, repo] = u.pathname
       .replace(/^\//, "")
       .replace(/\.git$/, "")
       .split("/");
-    const [owner, repo] = parts;
+
     return { owner, repo };
-  } catch (err) {
-    throw new Error("Invalid repo URL");
+  } catch {
+    throw new Error("Invalid repository URL");
   }
 };
 
-export const getRepoCommitStats = async (
-  repoUrl,
-  { days = 90, perPage = 100 } = {}
-) => {
-  const { owner, repo } = parseRepoUrl(repoUrl);
+/* ================= FETCH ALL COMMITS ================= */
+const fetchAllCommits = async (client, owner, repo) => {
+  let page = 1;
+  const perPage = 100;
+  let allCommits = [];
 
-  // Generate AI-powered commit messages instead of fetching real ones
-  let aiCommitMessages = [];
-  try {
-    aiCommitMessages = await generateMultipleCommitMessages(perPage);
-  } catch (error) {
-    console.warn(
-      "AI commit message generation failed, using fallback messages:",
-      error.message
-    );
-    // Fallback to some default conventional commit messages
-    aiCommitMessages = [
-      "feat: add user authentication",
-      "fix: resolve login issue",
-      "docs: update README",
-      "style: format code",
-      "refactor: optimize performance",
-      "test: add unit tests",
-      "chore: update dependencies",
-    ];
-    // Repeat messages to fill the requested count
-    while (aiCommitMessages.length < perPage) {
-      aiCommitMessages = aiCommitMessages.concat(aiCommitMessages);
-    }
-    aiCommitMessages = aiCommitMessages.slice(0, perPage);
+  while (true) {
+    const res = await client.get(`/repos/${owner}/${repo}/commits`, {
+      params: { per_page: perPage, page },
+    });
+
+    if (!res.data || res.data.length === 0) break;
+
+    allCommits = allCommits.concat(res.data);
+
+    if (res.data.length < perPage) break;
+    page++;
   }
 
-  // Create simulated commit data with AI-generated messages
-  const commits = aiCommitMessages.map((message, index) => ({
-    commit: {
-      message,
-      author: {
-        date: new Date(
-          Date.now() - Math.random() * days * 24 * 60 * 60 * 1000
-        ).toISOString(),
-      },
-    },
-  }));
+  return allCommits;
+};
 
-  // Aggregate commits by date (YYYY-MM-DD)
+/* ================= MAIN FUNCTION ================= */
+export const getRepoCommitStats = async (repoUrl) => {
+  const { owner, repo } = parseRepoUrl(repoUrl);
+  const client = makeClient();
+
+  /* ================= COMMITS ================= */
+  const commits = await fetchAllCommits(client, owner, repo);
+
+  if (commits.length === 0) {
+    return {
+      timeline: [],
+      totalCommits: 0,
+      activeDays: 0,
+      maxCommitsInADay: 0,
+      avgCommitsPerDay: 0,
+      commitMessagePattern: "no commits",
+      flags: [],
+      aiGenerated: false,
+    };
+  }
+
+  /* ================= GROUP BY DATE ================= */
   const byDate = {};
   const messages = [];
 
-  for (const c of commits) {
-    const date = new Date(c.commit.author.date).toISOString().slice(0, 10);
-    byDate[date] = (byDate[date] || 0) + 1;
-    messages.push(c.commit.message);
+  let earliestCommit = null;
+  let latestCommit = null;
+
+  commits.forEach((c) => {
+    if (!c.commit || !c.commit.author || !c.commit.author.date) return;
+
+    const date = new Date(c.commit.author.date);
+    const isoDate = date.toISOString().slice(0, 10);
+
+    byDate[isoDate] = (byDate[isoDate] || 0) + 1;
+    messages.push(c.commit.message || "");
+
+    if (!earliestCommit || date < earliestCommit) earliestCommit = date;
+    if (!latestCommit || date > latestCommit) latestCommit = date;
+  });
+
+  /* ================= BUILD TIMELINE ================= */
+  const timeline = [];
+  if (earliestCommit && latestCommit) {
+    const cursor = new Date(earliestCommit);
+    while (cursor <= latestCommit) {
+      const d = cursor.toISOString().slice(0, 10);
+      timeline.push({
+        date: d,
+        commits: byDate[d] || 0,
+      });
+      cursor.setDate(cursor.getDate() + 1);
+    }
   }
 
-  const timeline = Object.keys(byDate)
-    .sort()
-    .map((date) => ({ date, commits: byDate[date] }));
-
+  /* ================= STATS ================= */
   const totalCommits = commits.length;
-  const activeDays = timeline.length;
-  const maxCommitsInADay = timeline.reduce(
-    (max, t) => Math.max(max, t.commits),
-    0
-  );
+  const activeDays = Object.keys(byDate).length;
+  const maxCommitsInADay = Math.max(...Object.values(byDate), 0);
 
-  // Analyze AI-generated commit message quality
-  const conventionalCommits = messages.filter((m) =>
-    /^(feat|fix|docs|style|refactor|test|chore)(\(.+\))?:/.test(m)
+  /* ================= MESSAGE QUALITY ================= */
+  const conventional = messages.filter((m) =>
+    /^(feat|fix|docs|style|refactor|test|chore)(\(.+\))?:/.test(m),
   ).length;
+
   const commitMessagePattern =
-    conventionalCommits / Math.max(1, messages.length) > 0.7
-      ? "professional conventional commits"
-      : "varied messages";
+    conventional / Math.max(messages.length, 1) > 0.7
+      ? "mostly conventional commits"
+      : "mostly short or generic messages";
 
   return {
-    timeline,
+    timeline, // ✅ from first commit → last commit
     totalCommits,
     activeDays,
     maxCommitsInADay,
-    averageFilesChanged: null,
+    avgCommitsPerDay: activeDays > 0 ? totalCommits / activeDays : totalCommits,
     commitMessagePattern,
-    aiGenerated: true, // Flag to indicate these are AI-generated
+    flags:
+      conventional / Math.max(messages.length, 1) < 0.4
+        ? ["Commit messages are mostly short and generic"]
+        : [],
+    aiGenerated: false,
   };
 };
