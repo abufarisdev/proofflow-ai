@@ -21,6 +21,7 @@ app.set("trust proxy", 1);
 /* ================= CORS ================= */
 const allowedOrigins = [
   "http://localhost:3000", // local frontend
+  "https://proofflow-ai.vercel.app", // deployed frontend
   process.env.FRONTEND_URL, // deployed frontend (Render/Vercel)
 ].filter(Boolean);
 
