@@ -61,3 +61,38 @@ export const getUserProjects = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+
+export const deleteProject = async (req, res) => {
+  try {
+    const userId = req.user?.firebaseUid;
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const { id } = req.params;
+    
+    // Check if the project exists and belongs to the user
+    const projectDoc = await getProjectsCollection().doc(id).get();
+    
+    if (!projectDoc.exists) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    const project = projectDoc.data();
+    if (project.userId !== userId) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    // Delete the project
+    await getProjectsCollection().doc(id).delete();
+
+    res.json({ 
+      success: true, 
+      message: "Project deleted successfully" 
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};

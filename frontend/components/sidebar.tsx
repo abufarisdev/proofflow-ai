@@ -25,7 +25,6 @@ const navItems = [
     label: "Projects", 
     icon: FolderKanban,
     description: "Manage your projects",
-    badge: 3
   },
   { 
     href: "/reports", 

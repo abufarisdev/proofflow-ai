@@ -113,7 +113,7 @@ export function PreferencesSection() {
                   id: "emailAlerts",
                   label: "Email Alerts",
                   description: "Receive email notifications for important updates",
-                  color: "from-purple-500 to-pink-500",
+                  color: "from-emerald-500 to-teal-500",
                 },
                 {
                   id: "projectReview",
@@ -125,7 +125,7 @@ export function PreferencesSection() {
                   id: "flaggedActivity",
                   label: "Flagged Activity Alerts",
                   description: "Receive alerts when suspicious activity is detected",
-                  color: "from-red-500 to-rose-500",
+                  color: "from-emerald-500 to-teal-500",
                 },
               ].map((notification) => (
                 <motion.div

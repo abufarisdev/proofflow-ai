@@ -35,3 +35,13 @@ export const getProjectById = async (id: string) => {
         throw error;
     }
 };
+
+export const deleteProject = async (projectId: string) => {
+    try {
+        const response = await api.delete(`/projects/${projectId}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error deleting project:', error);
+        throw error;
+    }
+};

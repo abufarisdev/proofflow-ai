@@ -128,6 +128,28 @@ export function ReportView({ reportId }: ReportViewProps) {
     return { label: "Flagged", color: "bg-gradient-to-r from-red-600 to-rose-500" }
   }
 
+  // Format date safely
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return null
+    
+    try {
+      const date = new Date(dateString)
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        console.warn("Invalid date string:", dateString)
+        return null
+      }
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      })
+    } catch (error) {
+      console.error("Error formatting date:", error)
+      return null
+    }
+  }
+
   if (loading) {
     return (
       <div className="relative min-h-screen bg-gradient-to-br from-gray-900 via-[#1F141E] to-[#51344D] overflow-hidden">
@@ -167,6 +189,10 @@ export function ReportView({ reportId }: ReportViewProps) {
   const confidenceColor = getConfidenceColor(confidenceScore)
   const statusBadge = getStatusBadge(confidenceScore, status)
   const projectName = project?.repoName || "Project Report"
+  const formattedDate = formatDate(createdAt)
+  
+  // Calculate total commits
+  const totalCommits = timeline.reduce((sum, entry) => sum + entry.commits, 0)
 
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-gray-900 via-[#1F141E] to-[#51344D] overflow-hidden">
@@ -191,7 +217,7 @@ export function ReportView({ reportId }: ReportViewProps) {
           <div className="absolute -inset-2 bg-gradient-to-r from-purple-600/30 via-pink-600/30 to-indigo-600/30 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           
           <div className="relative z-10">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
               <div>
                 <div className="flex items-center gap-3 mb-2">
                   <motion.div
@@ -209,24 +235,24 @@ export function ReportView({ reportId }: ReportViewProps) {
                 </div>
               </div>
               <div className="flex items-center gap-4">
-                {createdAt && (
-                  <div className="flex items-center gap-2 text-sm text-gray-400">
-                    <Calendar size={16} />
-                    {new Date(createdAt).toLocaleDateString()}
+                {formattedDate && (
+                  <div className="flex items-center gap-2 text-sm text-gray-300 bg-white/5 px-3 py-1.5 rounded-lg backdrop-blur-sm border border-white/10">
+                    <Calendar size={16} className="text-purple-400" />
+                    <span className="text-white">{formattedDate}</span>
                   </div>
                 )}
-                <Badge className={`px-3 py-1 ${statusBadge.color} border-0 text-white`}>
+                <Badge className={`px-4 py-2 ${statusBadge.color} border-0 text-white font-medium`}>
                   {statusBadge.label}
                 </Badge>
               </div>
             </div>
 
-            {/* Project Info and Confidence Score */}
-            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Project Info, Total Commits, and Confidence Score */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Project Info */}
               {project && (
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10">
-                  <div className="p-2 bg-gradient-to-br from-purple-600/20 to-pink-600/20 rounded-lg">
+                <div className="flex items-center gap-3 p-4 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-all">
+                  <div className="p-3 bg-gradient-to-br from-purple-600/20 to-pink-600/20 rounded-lg">
                     <Folder className="w-5 h-5 text-purple-400" />
                   </div>
                   <div className="flex-1">
@@ -245,12 +271,23 @@ export function ReportView({ reportId }: ReportViewProps) {
                 </div>
               )}
 
+              {/* Total Commits */}
+              <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-br from-cyan-600/10 to-blue-600/10 backdrop-blur-sm border border-cyan-500/20 hover:border-cyan-400/40 transition-all">
+                <div className="p-3 bg-gradient-to-br from-cyan-600/20 to-blue-600/20 rounded-lg">
+                  <GitCommit className="w-5 h-5 text-cyan-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-300 mb-1">Total Commits</p>
+                  <p className="text-2xl font-bold text-white">{totalCommits}</p>
+                </div>
+              </div>
+
               {/* Confidence Score */}
-              <div className={`px-4 py-3 rounded-lg bg-gradient-to-r ${confidenceColor} bg-opacity-20 border border-white/10 backdrop-blur-sm`}>
+              <div className={`p-4 rounded-xl bg-gradient-to-r ${confidenceColor} bg-opacity-20 backdrop-blur-sm border border-white/10 hover:bg-opacity-30 transition-all`}>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className={`p-2 rounded-lg bg-gradient-to-r ${confidenceColor}`}>
-                      <Shield className="w-4 h-4 text-white" />
+                  <div className="flex items-center gap-3">
+                    <div className={`p-3 bg-gradient-to-r ${confidenceColor} rounded-lg`}>
+                      <Shield className="w-5 h-5 text-white" />
                     </div>
                     <div>
                       <p className="text-sm font-medium text-white">Confidence Score</p>
@@ -266,7 +303,7 @@ export function ReportView({ reportId }: ReportViewProps) {
 
             {/* Optional Note */}
             {note && (
-              <div className="mt-4 p-3 rounded-lg bg-gradient-to-r from-cyan-600/10 to-blue-600/10 border border-cyan-500/20">
+              <div className="mt-4 p-4 rounded-lg bg-gradient-to-r from-cyan-600/10 to-blue-600/10 border border-cyan-500/20">
                 <p className="text-sm text-gray-300">
                   <span className="text-cyan-400 font-medium">Note: </span>
                   {note}
@@ -340,7 +377,7 @@ export function ReportView({ reportId }: ReportViewProps) {
           </motion.div>
         </div>
 
-        {/* Commit Timeline */}
+                {/* Commit Timeline */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -368,88 +405,103 @@ export function ReportView({ reportId }: ReportViewProps) {
             </div>
 
             {timeline.length > 0 ? (
-              <div className="h-[400px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={timeline}
-                    onMouseMove={(state) => {
-                      if (state.activeTooltipIndex !== undefined) {
-                        setActiveBar(state.activeTooltipIndex)
-                      }
-                    }}
-                    onMouseLeave={() => setActiveBar(null)}
-                  >
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      stroke="rgba(255,255,255,0.1)"
-                      vertical={false}
-                    />
-                    <XAxis
-                      dataKey="date"
-                      stroke="#989788"
-                      fontSize={12}
-                      tickLine={false}
-                      axisLine={false}
-                    />
-                    <YAxis
-                      stroke="#989788"
-                      fontSize={12}
-                      tickLine={false}
-                      axisLine={false}
-                    />
-                    <Tooltip
-                      content={<CustomTooltip />}
-                      cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                    />
-                    <Legend wrapperStyle={{ paddingTop: '20px', color: 'white' }} />
-                    <Bar
-                      dataKey="commits"
-                      name="Commits"
-                      radius={[4, 4, 0, 0]}
+              <>
+                <div className="h-[400px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={timeline}
+                      onMouseMove={(state) => {
+                        if (state.activeTooltipIndex !== undefined) {
+                          setActiveBar(state.activeTooltipIndex)
+                        }
+                      }}
+                      onMouseLeave={() => setActiveBar(null)}
                     >
-                      {timeline.map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={index === activeBar ? 
-                            "url(#barGradient)" : 
-                            index % 2 === 0 ? "#7c3aed" : "#a78bfa"
-                          }
-                          stroke={index === activeBar ? "#ffffff" : "transparent"}
-                          strokeWidth={index === activeBar ? 2 : 0}
-                          className="transition-all duration-300"
-                        />
-                      ))}
-                    </Bar>
-                    {/* Gradient definition for active bar */}
-                    <defs>
-                      <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#7c3aed" stopOpacity={1} />
-                        <stop offset="100%" stopColor="#a78bfa" stopOpacity={1} />
-                      </linearGradient>
-                    </defs>
-                  </BarChart>
-                </ResponsiveContainer>
-                
-                {/* Chart Legend */}
-                <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-gray-400">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded bg-[#7c3aed]" />
-                    <span>Commit Count</span>
-                  </div>
-                  {timeline.some(t => t.additions) && (
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded bg-emerald-500" />
-                      <span>Code Additions</span>
-                    </div>
-                  )}
-                  {timeline.some(t => t.deletions) && (
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded bg-red-500" />
-                      <span>Code Deletions</span>
-                    </div>
-                  )}
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke="rgba(255,255,255,0.1)"
+                        vertical={false}
+                      />
+                      <XAxis
+                        dataKey="date"
+                        stroke="#989788"
+                        fontSize={12}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <YAxis
+                        stroke="#989788"
+                        fontSize={12}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <Tooltip
+                        content={<CustomTooltip />}
+                        cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                      />
+                      {/* Removed the Legend component from here */}
+                      <Bar
+                        dataKey="commits"
+                        name="Commits"
+                        radius={[4, 4, 0, 0]}
+                      >
+                        {timeline.map((entry, index) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={index === activeBar ? 
+                              "url(#barGradient)" : 
+                              index % 2 === 0 ? "#7c3aed" : "#a78bfa"
+                            }
+                            stroke={index === activeBar ? "#ffffff" : "transparent"}
+                            strokeWidth={index === activeBar ? 2 : 0}
+                            className="transition-all duration-300"
+                          />
+                        ))}
+                      </Bar>
+                      {/* Gradient definition for active bar */}
+                      <defs>
+                        <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#7c3aed" stopOpacity={1} />
+                          <stop offset="100%" stopColor="#a78bfa" stopOpacity={1} />
+                        </linearGradient>
+                      </defs>
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
-              </div>
+                
+                {/* Enhanced Chart Legend - Now includes Commit Count */}
+                <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-sm">
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-purple-600/10 to-pink-600/10 border border-purple-500/20">
+                    <div className="w-3 h-3 rounded bg-[#7c3aed]" />
+                    <span className="text-gray-300 font-medium">Commit Count</span>
+                  </div>
+                  
+                  {/* Only show additions legend if there are additions in the data */}
+                  {timeline.some(t => t.additions && t.additions > 0) && (
+                    <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-emerald-600/10 to-teal-600/10 border border-emerald-500/20">
+                      <div className="w-3 h-3 rounded bg-emerald-500" />
+                      <span className="text-gray-300 font-medium">Code Additions</span>
+                    </div>
+                  )}
+                  
+                  {/* Only show deletions legend if there are deletions in the data */}
+                  {timeline.some(t => t.deletions && t.deletions > 0) && (
+                    <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-red-600/10 to-rose-600/10 border border-red-500/20">
+                      <div className="w-3 h-3 rounded bg-red-500" />
+                      <span className="text-gray-300 font-medium">Code Deletions</span>
+                    </div>
+                  )}
+                  
+                  {/* Activity indicator legend */}
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-cyan-600/10 to-blue-600/10 border border-cyan-500/20">
+                    <div className="relative w-3 h-3">
+                      <div className="absolute inset-0 bg-gradient-to-br from-cyan-400 to-blue-400 rounded-full animate-ping opacity-75" />
+                      <div className="absolute inset-0.5 bg-gradient-to-br from-cyan-400 to-blue-400 rounded-full" />
+                    </div>
+                    <span className="text-gray-300 font-medium">Active Date</span>
+                  </div>
+                </div>
+              </>
             ) : (
               <div className="flex flex-col items-center justify-center p-12 text-center">
                 <div className="w-20 h-20 bg-gradient-to-br from-gray-600/20 to-gray-700/20 rounded-full flex items-center justify-center mb-6 backdrop-blur-sm border border-gray-500/20">
@@ -463,39 +515,6 @@ export function ReportView({ reportId }: ReportViewProps) {
             )}
           </Card>
         </motion.div>
-
-        {/* Stats Summary */}
-        {timeline.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="grid grid-cols-1 md:grid-cols-3 gap-4"
-          >
-            <div className="p-4 rounded-xl bg-gradient-to-br from-white/5 to-white/10 backdrop-blur-sm border border-white/10">
-              <p className="text-sm text-gray-300 mb-1">Total Commits</p>
-              <p className="text-2xl font-bold text-white">
-                {timeline.reduce((sum, entry) => sum + entry.commits, 0)}
-              </p>
-            </div>
-            {timeline.some(t => t.additions) && (
-              <div className="p-4 rounded-xl bg-gradient-to-br from-emerald-600/10 to-teal-600/10 backdrop-blur-sm border border-emerald-500/20">
-                <p className="text-sm text-gray-300 mb-1">Total Additions</p>
-                <p className="text-2xl font-bold text-white">
-                  +{timeline.reduce((sum, entry) => sum + (entry.additions || 0), 0)}
-                </p>
-              </div>
-            )}
-            {timeline.some(t => t.deletions) && (
-              <div className="p-4 rounded-xl bg-gradient-to-br from-red-600/10 to-rose-600/10 backdrop-blur-sm border border-red-500/20">
-                <p className="text-sm text-gray-300 mb-1">Total Deletions</p>
-                <p className="text-2xl font-bold text-white">
-                  -{timeline.reduce((sum, entry) => sum + (entry.deletions || 0), 0)}
-                </p>
-              </div>
-            )}
-          </motion.div>
-        )}
       </div>
     </div>
   )

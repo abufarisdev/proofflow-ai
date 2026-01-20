@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { motion, AnimatePresence } from "framer-motion"
 import ParticleBackground from "./ParticleBackground"
-import { createProject, getAllProjects } from "@/services/projectService"
+import { createProject, getAllProjects, deleteProject } from "@/services/projectService" // Add deleteProject import
 import { toast } from "@/hooks/use-toast"
 import { Project } from "@/types"
 
@@ -26,6 +26,7 @@ export function ProjectsList() {
     const [isCreateOpen, setIsCreateOpen] = useState(false)
     const [isDeleteOpen, setIsDeleteOpen] = useState(false)
     const [creating, setCreating] = useState(false)
+    const [deleting, setDeleting] = useState(false)
 
     // New Project State
     const [newProjectName, setNewProjectName] = useState("")
@@ -48,8 +49,10 @@ export function ProjectsList() {
                     name: project.repoName,
                     repoName: project.repoName,
                     repoUrl: project.repoUrl,
-                    status: "active" as Project['status'], // Default status since backend doesn't have it
-                    createdAt: project.createdAt?.toDate ? project.createdAt.toDate().toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+                    status: "active" as Project['status'],
+                    createdAt: project.createdAt?.toDate ? 
+                        project.createdAt.toDate().toISOString().split('T')[0] : 
+                        new Date().toISOString().split('T')[0],
                     description: project.description || ""
                 }))
                 setProjects(mappedProjects)
@@ -84,10 +87,33 @@ export function ProjectsList() {
     }
 
     // Delete Logic
-    const handleDeleteConfirm = () => {
-        setProjects(projects.filter(p => !selectedProjects.includes(p.id)))
-        setSelectedProjects([])
-        setIsDeleteOpen(false)
+    const handleDeleteConfirm = async () => {
+        setDeleting(true);
+        try {
+            // Delete each selected project
+            for (const projectId of selectedProjects) {
+                await deleteProject(projectId);
+            }
+            
+            // Update frontend state after successful deletion
+            setProjects(projects.filter(p => !selectedProjects.includes(p.id)));
+            setSelectedProjects([]);
+            setIsDeleteOpen(false);
+            
+            toast({
+                title: "Success",
+                description: `Deleted ${selectedProjects.length} project${selectedProjects.length > 1 ? 's' : ''} successfully`
+            });
+        } catch (error) {
+            console.error("Error deleting projects:", error);
+            toast({
+                title: "Error",
+                description: "Failed to delete projects. Please try again.",
+                variant: "destructive"
+            });
+        } finally {
+            setDeleting(false);
+        }
     }
 
     // Create Logic
@@ -125,7 +151,9 @@ export function ProjectsList() {
                     name: response.project.repoName,
                     repoUrl: response.project.repoUrl,
                     status: "active",
-                    createdAt: response.project.createdAt?.toDate ? response.project.createdAt.toDate().toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+                    createdAt: response.project.createdAt?.toDate ? 
+                        response.project.createdAt.toDate().toISOString().split('T')[0] : 
+                        new Date().toISOString().split('T')[0],
                     description: response.project.description || ""
                 }
                 setProjects([newProject, ...projects])
@@ -157,18 +185,18 @@ export function ProjectsList() {
     }
 
     return (
-        <div className="relative min-h-[calc(100vh-4rem)] bg-gradient-to-br from-gray-900 via-[#1F141E] to-[#51344D]">
+        <div className="relative bg-gradient-to-br from-gray-900 via-[#1F141E] to-[#51344D] overflow-x-hidden min-h-screen">
             {/* Particle Background - Adjusted to not cover sidebar */}
-            <div className="absolute inset-0 z-0">
+            <div className="fixed inset-0 z-0">
                 <ParticleBackground />
             </div>
 
-            {/* Animated gradient orbs - Adjusted positions */}
-            <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-br from-purple-600/20 to-pink-600/20 rounded-full blur-3xl animate-pulse" />
-            <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-br from-cyan-600/20 to-blue-600/20 rounded-full blur-3xl animate-pulse delay-1000" />
-            <div className="absolute top-1/2 right-1/4 w-64 h-64 bg-gradient-to-br from-emerald-600/20 to-teal-600/20 rounded-full blur-3xl animate-pulse delay-500" />
+            {/* Animated gradient orbs - Adjusted positions and sizes */}
+            <div className="fixed top-0 right-[-100px] w-72 h-72 bg-gradient-to-br from-purple-600/20 to-pink-600/20 rounded-full blur-3xl animate-pulse" />
+            <div className="fixed bottom-0 left-[-100px] w-96 h-96 bg-gradient-to-br from-cyan-600/20 to-blue-600/20 rounded-full blur-3xl animate-pulse delay-1000" />
+            <div className="fixed top-1/2 right-1/4 w-64 h-64 bg-gradient-to-br from-emerald-600/20 to-teal-600/20 rounded-full blur-3xl animate-pulse delay-500" />
 
-            <div className="relative z-10 p-4 sm:p-8">
+            <div className="relative z-10 p-4 sm:p-8 min-h-screen">
                 <motion.div 
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -203,7 +231,7 @@ export function ProjectsList() {
                                         variant="destructive"
                                         disabled={selectedProjects.length === 0}
                                         onClick={() => setIsDeleteOpen(true)}
-                                        className="bg-gradient-to-r from-red-600 to-rose-600 border-none hover:shadow-lg hover:shadow-red-500/30"
+                                        className="bg-gradient-to-r from-red-600 to-rose-600 border-none hover:shadow-lg hover:shadow-red-500/30 text-white hover:text-white"
                                     >
                                         <Trash2 size={16} className="mr-2" />
                                         Delete ({selectedProjects.length})
@@ -215,7 +243,7 @@ export function ProjectsList() {
                                 >
                                     <Button
                                         onClick={() => setIsCreateOpen(true)}
-                                        className="bg-gradient-to-r from-purple-600 to-pink-600 border-none hover:shadow-lg hover:shadow-purple-500/30"
+                                        className="bg-gradient-to-r from-purple-600 to-pink-600 border-none hover:shadow-lg hover:shadow-purple-500/30 text-white hover:text-white"
                                     >
                                         <Plus size={16} className="mr-2" />
                                         Create Project
@@ -230,130 +258,138 @@ export function ProjectsList() {
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.5, delay: 0.2 }}
-                    className="relative"
+                    className="relative flex-grow"
                 >
-                    {/* Card Glow Effect */}
+                    {/* Card Glow Effect - Reduced inset to prevent overflow */}
                     <div className="absolute -inset-4 bg-gradient-to-r from-purple-600/20 via-pink-600/20 to-cyan-600/20 rounded-3xl blur-xl" />
                     
-                    <Card className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20 relative z-10">
-                        <CardContent className="p-0">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow className="border-white/10 hover:bg-transparent">
-                                        <TableHead className="w-[50px] pl-4 text-gray-300">
-                                            <Checkbox
-                                                checked={projects.length > 0 && selectedProjects.length === projects.length}
-                                                onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
-                                                className="border-white/30 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
-                                            />
-                                        </TableHead>
-                                        <TableHead className="text-gray-300">Project Name</TableHead>
-                                        <TableHead className="text-gray-300">Repository</TableHead>
-                                        <TableHead className="text-gray-300">Status</TableHead>
-                                        <TableHead className="text-gray-300">Created At</TableHead>
-                                        <TableHead className="text-right text-gray-300">Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {loading ? (
-                                        <TableRow className="border-white/10 hover:bg-white/5">
-                                            <TableCell colSpan={6} className="h-32 text-center text-gray-400">
-                                                Loading projects...
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : projects.length === 0 ? (
-                                        <TableRow className="border-white/10 hover:bg-white/5">
-                                            <TableCell colSpan={6} className="h-32 text-center text-gray-400">
-                                                No projects found. Create one to get started.
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : projects.map((project, index) => (
-                                        <motion.tr 
-                                            key={project.id}
-                                            initial={{ opacity: 0, y: 20 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            transition={{ delay: index * 0.1 }}
-                                            whileHover={{ scale: 1.005, backgroundColor: 'rgba(255,255,255,0.05)' }}
-                                            className="border-white/10 group"
-                                        >
-                                            <TableCell className="pl-4">
-                                                <Checkbox
-                                                    checked={selectedProjects.includes(project.id)}
-                                                    onCheckedChange={(checked) => handleSelectOne(project.id, checked as boolean)}
-                                                    className="border-white/30 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
-                                                />
-                                            </TableCell>
-                                            <TableCell className="font-medium">
-                                                <motion.div 
-                                                    className="flex items-center gap-2"
-                                                    whileHover={{ x: 5 }}
+                    <Card className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20 relative z-10 overflow-hidden min-h-[500px]">
+                        <CardContent className="p-0 h-full">
+                            <div className="overflow-x-auto h-full">
+                                <div className="min-w-full h-full">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow className="border-white/10 hover:bg-transparent">
+                                                <TableHead className="w-[60px] pl-6 pr-2 text-gray-300">
+                                                    <Checkbox
+                                                        checked={projects.length > 0 && selectedProjects.length === projects.length}
+                                                        onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
+                                                        className="border-white/30 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
+                                                    />
+                                                </TableHead>
+                                                <TableHead className="text-gray-300 min-w-[220px] px-4">Project Name</TableHead>
+                                                <TableHead className="text-gray-300 min-w-[300px] px-4">Repository</TableHead>
+                                                <TableHead className="text-gray-300 min-w-[140px] px-4">Status</TableHead>
+                                                <TableHead className="text-gray-300 min-w-[160px] px-4">Created At</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {loading ? (
+                                                <TableRow className="border-white/10 hover:bg-white/5">
+                                                    <TableCell colSpan={5} className="h-32 text-center text-gray-400">
+                                                        Loading projects...
+                                                    </TableCell>
+                                                </TableRow>
+                                            ) : projects.length === 0 ? (
+                                                <TableRow className="border-white/10 hover:bg-white/5">
+                                                    <TableCell colSpan={5} className="h-32 text-center text-gray-400">
+                                                        No projects found. Create one to get started.
+                                                    </TableCell>
+                                                </TableRow>
+                                            ) : projects.map((project, index) => (
+                                                <motion.tr 
+                                                    key={project.id}
+                                                    initial={{ opacity: 0, y: 20 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    transition={{ delay: index * 0.1 }}
+                                                    whileHover={{ backgroundColor: 'rgba(255,255,255,0.05)' }}
+                                                    className="border-white/10 group"
                                                 >
-                                                    <div className="p-2 bg-gradient-to-br from-purple-600/20 to-pink-600/20 rounded-lg group-hover:scale-110 transition-transform duration-300">
-                                                        <Folder size={16} className="text-purple-400" />
-                                                    </div>
-                                                    <span className="text-white whitespace-nowrap">{project.name}</span>
-                                                </motion.div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <motion.a 
-                                                    href={project.repoUrl} 
-                                                    target="_blank" 
-                                                    rel="noopener noreferrer" 
-                                                    className="flex items-center gap-2 text-gray-300 hover:text-purple-400 transition-colors whitespace-nowrap group/repo"
-                                                    whileHover={{ x: 5 }}
-                                                >
-                                                    <GitBranch size={14} />
-                                                    <span className="group-hover/repo:text-purple-300">
-                                                        {project.repoUrl.replace('https://github.com/', '')}
-                                                    </span>
-                                                </motion.a>
-                                            </TableCell>
-                                            <TableCell>
-                                                <motion.div whileHover={{ scale: 1.1 }}>
-                                                    <Badge
-                                                        variant={
-                                                            project.status === 'active' ? 'verified' :
-                                                            project.status === 'maintenance' ? 'pending' :
-                                                            'outline'
-                                                        }
-                                                        className={`
-                                                            ${project.status === 'active' ? 'bg-gradient-to-r from-emerald-600/20 to-teal-600/20 text-emerald-400 border-emerald-500/20' :
-                                                            project.status === 'maintenance' ? 'bg-gradient-to-r from-amber-600/20 to-orange-600/20 text-amber-400 border-amber-500/20' :
-                                                            'bg-gradient-to-r from-gray-600/20 to-gray-700/20 text-gray-400 border-gray-500/20'}
-                                                            backdrop-blur-sm
-                                                        `}
-                                                    >
-                                                        {project.status.charAt(0).toUpperCase() + project.status.slice(1)}
-                                                    </Badge>
-                                                </motion.div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <motion.div 
-                                                    className="flex items-center gap-2 text-gray-300 whitespace-nowrap"
-                                                    whileHover={{ x: 5 }}
-                                                >
-                                                    <Calendar size={14} className="text-cyan-400" />
-                                                    {project.createdAt}
-                                                </motion.div>
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <motion.div whileHover={{ scale: 1.05 }}>
-                                                    <Link href={`#`}>
-                                                        <Button 
-                                                            variant="ghost" 
-                                                            size="sm" 
-                                                            className="bg-gradient-to-r from-purple-600/10 to-pink-600/10 hover:from-purple-600/20 hover:to-pink-600/20 text-purple-400 hover:text-purple-300 border border-purple-500/20 hover:border-purple-500/40"
+                                                    <TableCell className="pl-6 pr-2">
+                                                        <Checkbox
+                                                            checked={selectedProjects.includes(project.id)}
+                                                            onCheckedChange={(checked) => handleSelectOne(project.id, checked as boolean)}
+                                                            className="border-white/30 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className="font-medium px-4">
+                                                        <motion.div 
+                                                            className="flex items-center gap-3"
+                                                            whileHover={{ x: 5 }}
                                                         >
-                                                            <Eye size={16} className="mr-2" />
-                                                            View
-                                                        </Button>
-                                                    </Link>
-                                                </motion.div>
-                                            </TableCell>
-                                        </motion.tr>
-                                    ))}
-                                </TableBody>
-                            </Table>
+                                                            <div className="p-2 bg-gradient-to-br from-purple-600/20 to-pink-600/20 rounded-lg group-hover:scale-110 transition-transform duration-300">
+                                                                <Folder size={18} className="text-purple-400" />
+                                                            </div>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-white font-medium">{project.name}</span>
+                                                                {project.description && (
+                                                                    <span className="text-xs text-gray-400 truncate max-w-[180px]">
+                                                                        {project.description}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </motion.div>
+                                                    </TableCell>
+                                                    <TableCell className="px-4 min-w-[300px]">
+                                                        <motion.a 
+                                                            href={project.repoUrl} 
+                                                            target="_blank" 
+                                                            rel="noopener noreferrer" 
+                                                            className="flex items-center gap-3 text-gray-300 hover:text-purple-400 transition-colors group/repo"
+                                                            whileHover={{ x: 5 }}
+                                                        >
+                                                            <div className="p-1.5 bg-gradient-to-br from-cyan-600/20 to-blue-600/20 rounded-lg border border-cyan-500/20">
+                                                                <GitBranch size={16} className="text-cyan-400" />
+                                                            </div>
+                                                            <div className="flex flex-col">
+                                                                <span className="truncate max-w-[250px] group-hover/repo:text-purple-300 font-medium">
+                                                                    {project.repoUrl.replace('https://github.com/', '')}
+                                                                </span>
+                                                                <span className="text-xs text-gray-400">
+                                                                    GitHub Repository
+                                                                </span>
+                                                            </div>
+                                                        </motion.a>
+                                                    </TableCell>
+                                                    <TableCell className="px-4">
+                                                        <motion.div whileHover={{ scale: 1.1 }}>
+                                                            <Badge
+                                                                variant={
+                                                                    project.status === 'active' ? 'verified' :
+                                                                    project.status === 'maintenance' ? 'pending' :
+                                                                    'outline'
+                                                                }
+                                                                className={`
+                                                                    ${project.status === 'active' ? 'bg-gradient-to-r from-emerald-600/20 to-teal-600/20 text-emerald-400 border-emerald-500/20' :
+                                                                    project.status === 'maintenance' ? 'bg-gradient-to-r from-amber-600/20 to-orange-600/20 text-amber-400 border-amber-500/20' :
+                                                                    'bg-gradient-to-r from-gray-600/20 to-gray-700/20 text-gray-400 border-gray-500/20'}
+                                                                    backdrop-blur-sm whitespace-nowrap px-4 py-1.5
+                                                                `}
+                                                            >
+                                                                {project.status.charAt(0).toUpperCase() + project.status.slice(1)}
+                                                            </Badge>
+                                                        </motion.div>
+                                                    </TableCell>
+                                                    <TableCell className="px-4 whitespace-nowrap">
+                                                        <motion.div 
+                                                            className="flex items-center gap-3 text-gray-300"
+                                                            whileHover={{ x: 5 }}
+                                                        >
+                                                            <div className="p-1.5 bg-gradient-to-br from-cyan-600/20 to-blue-600/20 rounded-lg border border-cyan-500/20">
+                                                                <Calendar size={16} className="text-cyan-400" />
+                                                            </div>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-white font-medium">{project.createdAt}</span>
+                                                                <span className="text-xs text-gray-400">Date Added</span>
+                                                            </div>
+                                                        </motion.div>
+                                                    </TableCell>
+                                                </motion.tr>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            </div>
                         </CardContent>
                     </Card>
                 </motion.div>
@@ -363,7 +399,7 @@ export function ProjectsList() {
                     if (!open) resetForm();
                     setIsCreateOpen(open);
                 }}>
-                    <DialogContent className="sm:max-w-[500px] bg-gradient-to-br from-gray-900 to-[#1F141E] border border-white/10 backdrop-blur-xl text-white">
+                    <DialogContent className="sm:max-w-[500px] bg-gradient-to-br from-gray-900 to-[#1F141E] border border-white/10 backdrop-blur-xl text-white overflow-hidden">
                         <DialogHeader>
                             <div className="flex items-center gap-2 mb-2">
                                 <div className="p-2 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg">
@@ -421,7 +457,7 @@ export function ProjectsList() {
                                 <Button 
                                     onClick={handleCreateProject}
                                     disabled={creating}
-                                    className="bg-gradient-to-r from-purple-600 to-pink-600 border-none hover:shadow-lg hover:shadow-purple-500/30"
+                                    className="bg-gradient-to-r from-purple-600 to-pink-600 border-none hover:shadow-lg hover:shadow-purple-500/30 text-white"
                                 >
                                     {creating ? "Creating..." : "Create Project"}
                                 </Button>
@@ -432,7 +468,7 @@ export function ProjectsList() {
 
                 {/* Delete Confirmation Modal */}
                 <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-                    <AlertDialogContent className="bg-gradient-to-br from-gray-900 to-[#1F141E] border border-white/10 backdrop-blur-xl text-white">
+                    <AlertDialogContent className="bg-gradient-to-br from-gray-900 to-[#1F141E] border border-white/10 backdrop-blur-xl text-white overflow-hidden">
                         <AlertDialogHeader>
                             <div className="flex items-center gap-2 mb-2">
                                 <div className="p-2 bg-gradient-to-br from-red-600 to-rose-600 rounded-lg">
@@ -445,15 +481,16 @@ export function ProjectsList() {
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                            <AlertDialogCancel className="border-white/10 text-gray-300 hover:bg-white/10">
+                            <AlertDialogCancel className="border-white/10 text-gray-300 hover:bg-white/10" disabled={deleting}>
                                 Cancel
                             </AlertDialogCancel>
                             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                                 <AlertDialogAction 
                                     onClick={handleDeleteConfirm} 
-                                    className="bg-gradient-to-r from-red-600 to-rose-600 border-none hover:shadow-lg hover:shadow-red-500/30"
+                                    disabled={deleting}
+                                    className="bg-gradient-to-r from-red-600 to-rose-600 border-none hover:shadow-lg hover:shadow-red-500/30 text-white"
                                 >
-                                    Delete
+                                    {deleting ? "Deleting..." : "Delete"}
                                 </AlertDialogAction>
                             </motion.div>
                         </AlertDialogFooter>

@@ -56,15 +56,33 @@ export function ReportsList() {
             setLoading(true)
             const response: any = await getReports()
             if (response?.success && response?.data && Array.isArray(response.data)) {
-                const mappedReports: Report[] = response.data.map((item: any) => ({
-                    id: item.id,
-                    name: item.project?.repoName || 'Unknown Project',
-                    repoUrl: item.project?.repoUrl || '',
-                    status: (item.project?.status || 'pending') as Report['status'],
-                    confidence: item.confidenceScore || 0,
-                    createdAt: item.createdAt?.toDate ? item.createdAt.toDate().toISOString() : item.createdAt || new Date().toISOString(),
-                    action: 'Report Generated'
-                }))
+                const mappedReports: Report[] = response.data.map((item: any) => {
+                    // Handle date parsing safely
+                    let createdAt = new Date().toISOString();
+                    
+                    if (item.createdAt) {
+                        if (typeof item.createdAt === 'object' && item.createdAt.toDate) {
+                            // Firestore timestamp
+                            createdAt = item.createdAt.toDate().toISOString();
+                        } else if (typeof item.createdAt === 'string') {
+                            // ISO string
+                            const date = new Date(item.createdAt);
+                            if (!isNaN(date.getTime())) {
+                                createdAt = item.createdAt;
+                            }
+                        }
+                    }
+                    
+                    return {
+                        id: item.id,
+                        name: item.project?.repoName || 'Unknown Project',
+                        repoUrl: item.project?.repoUrl || '',
+                        status: (item.project?.status || 'pending') as Report['status'],
+                        confidence: item.confidenceScore || 0,
+                        createdAt: createdAt,
+                        action: 'Report Generated'
+                    }
+                })
                 setReports(mappedReports)
             }
         } catch (error) {
@@ -99,6 +117,25 @@ export function ReportsList() {
             fetchProjects()
         }
     }, [isCreateOpen])
+
+    // Format date safely
+    const formatDate = (dateString: string) => {
+        if (!dateString) return 'N/A';
+        
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) {
+                return 'Invalid Date';
+            }
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        } catch (error) {
+            return 'Invalid Date';
+        }
+    }
 
     // Selection Logic
     const handleSelectAll = (checked: boolean) => {
@@ -169,31 +206,31 @@ export function ReportsList() {
         switch (status) {
             case 'verified': 
                 return (
-                    <Badge className="bg-gradient-to-r from-emerald-600/20 to-teal-600/20 text-emerald-400 border-emerald-500/20 backdrop-blur-sm">
+                    <Badge className="bg-gradient-to-r from-emerald-600/20 to-teal-600/20 text-emerald-400 border-emerald-500/20 backdrop-blur-sm px-3 py-1">
                         Verified
                     </Badge>
                 );
             case 'flagged': 
                 return (
-                    <Badge className="bg-gradient-to-r from-red-600/20 to-rose-600/20 text-red-400 border-red-500/20 backdrop-blur-sm">
+                    <Badge className="bg-gradient-to-r from-red-600/20 to-rose-600/20 text-red-400 border-red-500/20 backdrop-blur-sm px-3 py-1">
                         Flagged
                     </Badge>
                 );
             case 'pending': 
                 return (
-                    <Badge className="bg-gradient-to-r from-amber-600/20 to-orange-600/20 text-amber-400 border-amber-500/20 backdrop-blur-sm">
+                    <Badge className="bg-gradient-to-r from-amber-600/20 to-orange-600/20 text-amber-400 border-amber-500/20 backdrop-blur-sm px-3 py-1">
                         Pending
                     </Badge>
                 );
             case 'processing': 
                 return (
-                    <Badge className="bg-gradient-to-r from-blue-600/20 to-cyan-600/20 text-blue-400 border-blue-500/20 backdrop-blur-sm">
+                    <Badge className="bg-gradient-to-r from-blue-600/20 to-cyan-600/20 text-blue-400 border-blue-500/20 backdrop-blur-sm px-3 py-1">
                         Processing
                     </Badge>
                 );
             default: 
                 return (
-                    <Badge className="bg-gradient-to-r from-gray-600/20 to-gray-700/20 text-gray-400 border-gray-500/20 backdrop-blur-sm">
+                    <Badge className="bg-gradient-to-r from-gray-600/20 to-gray-700/20 text-gray-400 border-gray-500/20 backdrop-blur-sm px-3 py-1">
                         {status}
                     </Badge>
                 );
@@ -203,18 +240,18 @@ export function ReportsList() {
     const StatIcon = stats[activeStat].icon
 
     return (
-        <div className="relative min-h-screen bg-gradient-to-br from-gray-900 via-[#1F141E] to-[#51344D] overflow-hidden">
+        <div className="relative min-h-screen bg-gradient-to-br from-gray-900 via-[#1F141E] to-[#51344D] overflow-x-hidden">
             {/* Particle Background */}
-            <div className="absolute inset-0 z-0">
+            <div className="fixed inset-0 z-0">
                 <ParticleBackground />
             </div>
 
             {/* Animated gradient orbs */}
-            <div className="absolute top-0 left-0 w-72 h-72 bg-gradient-to-br from-purple-600/20 to-pink-600/20 rounded-full blur-3xl animate-pulse" />
-            <div className="absolute bottom-0 right-0 w-96 h-96 bg-gradient-to-br from-cyan-600/20 to-blue-600/20 rounded-full blur-3xl animate-pulse delay-1000" />
-            <div className="absolute top-1/2 left-1/4 w-64 h-64 bg-gradient-to-br from-emerald-600/20 to-teal-600/20 rounded-full blur-3xl animate-pulse delay-500" />
+            <div className="fixed top-0 left-0 w-72 h-72 bg-gradient-to-br from-purple-600/20 to-pink-600/20 rounded-full blur-3xl animate-pulse" />
+            <div className="fixed bottom-0 right-0 w-96 h-96 bg-gradient-to-br from-cyan-600/20 to-blue-600/20 rounded-full blur-3xl animate-pulse delay-1000" />
+            <div className="fixed top-1/2 left-1/4 w-64 h-64 bg-gradient-to-br from-emerald-600/20 to-teal-600/20 rounded-full blur-3xl animate-pulse delay-500" />
 
-            <div className="relative z-10 p-4 sm:p-8">
+            <div className="relative z-10 p-4 sm:p-8 min-h-screen">
                 {/* Header */}
                 <motion.div 
                     initial={{ opacity: 0, y: -20 }}
@@ -250,7 +287,7 @@ export function ReportsList() {
                                         variant="destructive"
                                         disabled={selectedReports.length === 0}
                                         onClick={() => setIsDeleteOpen(true)}
-                                        className="bg-gradient-to-r from-red-600 to-rose-600 border-none hover:shadow-lg hover:shadow-red-500/30"
+                                        className="bg-gradient-to-r from-red-600 to-rose-600 border-none hover:shadow-lg hover:shadow-red-500/30 text-white hover:text-white"
                                     >
                                         <Trash2 size={16} className="mr-2" />
                                         Delete ({selectedReports.length})
@@ -262,7 +299,7 @@ export function ReportsList() {
                                 >
                                     <Button
                                         onClick={() => setIsCreateOpen(true)}
-                                        className="bg-gradient-to-r from-purple-600 to-pink-600 border-none hover:shadow-lg hover:shadow-purple-500/30"
+                                        className="bg-gradient-to-r from-purple-600 to-pink-600 border-none hover:shadow-lg hover:shadow-purple-500/30 text-white hover:text-white"
                                     >
                                         <Plus size={16} className="mr-2" />
                                         Generate Report
@@ -354,7 +391,7 @@ export function ReportsList() {
                     {/* Card Glow Effect */}
                     <div className="absolute -inset-4 bg-gradient-to-r from-purple-600/20 via-pink-600/20 to-cyan-600/20 rounded-3xl blur-xl" />
                     
-                    <Card className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20 relative z-10">
+                    <Card className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20 relative z-10 overflow-hidden">
                         <CardHeader className="border-b border-white/10">
                             <CardTitle className="text-white flex items-center gap-2">
                                 <FileText className="w-5 h-5 text-purple-400" />
@@ -369,19 +406,19 @@ export function ReportsList() {
                                 <Table>
                                     <TableHeader>
                                         <TableRow className="border-white/10 hover:bg-transparent">
-                                            <TableHead className="w-[50px] pl-4 text-gray-300">
+                                            <TableHead className="w-[60px] pl-6 pr-2 text-gray-300">
                                                 <Checkbox
                                                     checked={reports.length > 0 && selectedReports.length === reports.length}
                                                     onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
                                                     className="border-white/30 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
                                                 />
                                             </TableHead>
-                                            <TableHead className="text-gray-300">Project Name</TableHead>
-                                            <TableHead className="text-gray-300">Repository</TableHead>
-                                            <TableHead className="text-gray-300">Submission Date</TableHead>
-                                            <TableHead className="text-gray-300">Status</TableHead>
-                                            <TableHead className="text-gray-300">Confidence</TableHead>
-                                            <TableHead className="text-right text-gray-300">Actions</TableHead>
+                                            <TableHead className="text-gray-300 min-w-[200px] px-4">Project Name</TableHead>
+                                            <TableHead className="text-gray-300 min-w-[200px] px-4">Repository</TableHead>
+                                            <TableHead className="text-gray-300 min-w-[140px] px-4">Submission Date</TableHead>
+                                            <TableHead className="text-gray-300 min-w-[120px] px-4">Status</TableHead>
+                                            <TableHead className="text-gray-300 min-w-[150px] px-4">Confidence</TableHead>
+                                            <TableHead className="text-right text-gray-300 min-w-[120px] px-4">Actions</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -402,7 +439,7 @@ export function ReportsList() {
                                                         <p className="text-gray-400 mb-6 max-w-sm">Generate your first report to see analysis results</p>
                                                         <Button
                                                             onClick={() => setIsCreateOpen(true)}
-                                                            className="bg-gradient-to-r from-purple-600 to-pink-600 border-none hover:shadow-lg hover:shadow-purple-500/30"
+                                                            className="bg-gradient-to-r from-purple-600 to-pink-600 border-none hover:shadow-lg hover:shadow-purple-500/30 text-white"
                                                         >
                                                             <Plus size={16} className="mr-2" />
                                                             Generate Report
@@ -417,19 +454,19 @@ export function ReportsList() {
                                                     initial={{ opacity: 0, y: 20 }}
                                                     animate={{ opacity: 1, y: 0 }}
                                                     transition={{ delay: index * 0.1 }}
-                                                    whileHover={{ scale: 1.005, backgroundColor: 'rgba(255,255,255,0.05)' }}
+                                                    whileHover={{ backgroundColor: 'rgba(255,255,255,0.05)' }}
                                                     className="border-white/10 group"
                                                 >
-                                                    <TableCell className="pl-4">
+                                                    <TableCell className="pl-6 pr-2">
                                                         <Checkbox
                                                             checked={selectedReports.includes(report.id)}
                                                             onCheckedChange={(checked) => handleSelectOne(report.id, checked as boolean)}
                                                             className="border-white/30 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
                                                         />
                                                     </TableCell>
-                                                    <TableCell className="font-medium">
+                                                    <TableCell className="font-medium px-4">
                                                         <motion.div 
-                                                            className="flex items-center gap-2"
+                                                            className="flex items-center gap-3"
                                                             whileHover={{ x: 5 }}
                                                         >
                                                             <div className="p-2 bg-gradient-to-br from-purple-600/20 to-pink-600/20 rounded-lg group-hover:scale-110 transition-transform duration-300">
@@ -441,35 +478,52 @@ export function ReportsList() {
                                                             </div>
                                                         </motion.div>
                                                     </TableCell>
-                                                    <TableCell>
-                                                        <motion.div 
-                                                            className="flex items-center gap-2 text-gray-300 whitespace-nowrap"
+                                                    <TableCell className="px-4 min-w-[200px]">
+                                                        <motion.a 
+                                                            href={report.repoUrl} 
+                                                            target="_blank" 
+                                                            rel="noopener noreferrer" 
+                                                            className="flex items-center gap-3 text-gray-300 hover:text-purple-400 transition-colors group/repo"
                                                             whileHover={{ x: 5 }}
                                                         >
-                                                            <GitBranch size={14} className="text-cyan-400" />
-                                                            {report.repoUrl ? report.repoUrl.replace('https://github.com/', '') : 'N/A'}
-                                                        </motion.div>
+                                                            <div className="p-1.5 bg-gradient-to-br from-cyan-600/20 to-blue-600/20 rounded-lg border border-cyan-500/20">
+                                                                <GitBranch size={16} className="text-cyan-400" />
+                                                            </div>
+                                                            <div className="flex flex-col">
+                                                                <span className="truncate max-w-[180px] group-hover/repo:text-purple-300 font-medium">
+                                                                    {report.repoUrl ? report.repoUrl.replace('https://github.com/', '') : 'N/A'}
+                                                                </span>
+                                                                <span className="text-xs text-gray-400">
+                                                                    GitHub Repository
+                                                                </span>
+                                                            </div>
+                                                        </motion.a>
                                                     </TableCell>
-                                                    <TableCell>
+                                                    <TableCell className="px-4 whitespace-nowrap">
                                                         <motion.div 
-                                                            className="flex items-center gap-2 text-gray-300 whitespace-nowrap"
+                                                            className="flex items-center gap-3 text-gray-300"
                                                             whileHover={{ x: 5 }}
                                                         >
-                                                            <Calendar size={14} className="text-amber-400" />
-                                                            {new Date(report.createdAt).toLocaleDateString()}
+                                                            <div className="p-1.5 bg-gradient-to-br from-cyan-600/20 to-blue-600/20 rounded-lg border border-cyan-500/20">
+                                                                <Calendar size={16} className="text-cyan-400" />
+                                                            </div>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-white font-medium">{formatDate(report.createdAt)}</span>
+                                                                <span className="text-xs text-gray-400">Date Submitted</span>
+                                                            </div>
                                                         </motion.div>
                                                     </TableCell>
-                                                    <TableCell>
+                                                    <TableCell className="px-4">
                                                         {getStatusBadge(report.status)}
                                                     </TableCell>
-                                                    <TableCell className="w-[150px] min-w-[150px]">
+                                                    <TableCell className="px-4 min-w-[150px]">
                                                         {report.status !== "pending" ? (
                                                             <motion.div 
-                                                                className="flex items-center gap-2"
+                                                                className="flex items-center gap-3"
                                                                 whileHover={{ x: 5 }}
                                                             >
-                                                                <span className="text-sm font-medium w-8 text-white">{report.confidence}%</span>
-                                                                <div className="flex-1">
+                                                                <span className="text-sm font-medium w-10 text-white">{report.confidence}%</span>
+                                                                <div className="flex-1 min-w-[80px]">
                                                                     <Progress
                                                                         value={report.confidence}
                                                                         className="h-2 bg-white/10"
@@ -487,7 +541,7 @@ export function ReportsList() {
                                                             <span className="text-xs text-amber-400 italic whitespace-nowrap">Analysis in progress</span>
                                                         )}
                                                     </TableCell>
-                                                    <TableCell className="text-right">
+                                                    <TableCell className="px-4 text-right">
                                                         <motion.div whileHover={{ scale: 1.05 }}>
                                                             <Link 
                                                                 href={`/reports/${report.id}`}
@@ -499,7 +553,7 @@ export function ReportsList() {
                                                                     className="bg-gradient-to-r from-purple-600/10 to-pink-600/10 hover:from-purple-600/20 hover:to-pink-600/20 text-purple-400 hover:text-purple-300 border border-purple-500/20 hover:border-purple-500/40"
                                                                 >
                                                                     <Eye size={16} className="mr-2" />
-                                                                    View Details
+                                                                    View
                                                                 </Button>
                                                             </Link>
                                                         </motion.div>
@@ -516,7 +570,7 @@ export function ReportsList() {
 
                 {/* Generate Report Modal */}
                 <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-                    <DialogContent className="sm:max-w-[500px] bg-gradient-to-br from-gray-900 to-[#1F141E] border border-white/10 backdrop-blur-xl text-white">
+                    <DialogContent className="sm:max-w-[500px] bg-gradient-to-br from-gray-900 to-[#1F141E] border border-white/10 backdrop-blur-xl text-white overflow-hidden">
                         <DialogHeader>
                             <div className="flex items-center gap-2 mb-2">
                                 <div className="p-2 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg">
@@ -571,7 +625,7 @@ export function ReportsList() {
                                 <Button
                                     onClick={handleCreateReport}
                                     disabled={createLoading || !selectedProjectId}
-                                    className="bg-gradient-to-r from-purple-600 to-pink-600 border-none hover:shadow-lg hover:shadow-purple-500/30 disabled:opacity-50"
+                                    className="bg-gradient-to-r from-purple-600 to-pink-600 border-none hover:shadow-lg hover:shadow-purple-500/30 disabled:opacity-50 text-white"
                                 >
                                     {createLoading ? (
                                         <span className="flex items-center gap-2">
@@ -587,7 +641,7 @@ export function ReportsList() {
 
                 {/* Delete Confirmation Modal */}
                 <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-                    <AlertDialogContent className="bg-gradient-to-br from-gray-900 to-[#1F141E] border border-white/10 backdrop-blur-xl text-white">
+                    <AlertDialogContent className="bg-gradient-to-br from-gray-900 to-[#1F141E] border border-white/10 backdrop-blur-xl text-white overflow-hidden">
                         <AlertDialogHeader>
                             <div className="flex items-center gap-2 mb-2">
                                 <div className="p-2 bg-gradient-to-br from-red-600 to-rose-600 rounded-lg">
@@ -606,7 +660,7 @@ export function ReportsList() {
                             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                                 <AlertDialogAction 
                                     onClick={handleDeleteConfirm} 
-                                    className="bg-gradient-to-r from-red-600 to-rose-600 border-none hover:shadow-lg hover:shadow-red-500/30"
+                                    className="bg-gradient-to-r from-red-600 to-rose-600 border-none hover:shadow-lg hover:shadow-red-500/30 text-white"
                                 >
                                     Delete
                                 </AlertDialogAction>
