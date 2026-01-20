@@ -50,18 +50,26 @@ ProofFlow-AI is a full-stack platform that analyzes GitHub repositories to asses
 * Environment-based configuration
 
 ---
+### Team Details
+| Name           | Role       | GitHub |
+|----------------|------------|--------|
+| Abu Faris      | Team Lead  | [@abufarisdev](https://github.com/abufarisdev) |
+| Adarsh Shaw    | Member     | [@adarsh-279](https://github.com/adarsh-279) |
+| Ashmit Rai     | Member     | [@ashmitt](https://github.com/ashmitt) |
+| Hassan Rahman  | Member     | [@HassanRahman7](https://github.com/hassanrahman7) |
+
+---
 
 ### 🖼️ Snapshots
-
 <table>
   <tr>
     <td>
-      <img src="https://github.com/user-attachments/assets/6d35b36c-3602-45cc-aaff-35c352914875"
+      <img src="https://github.com/user-attachments/assets/c572ce91-9e99-4bab-a368-0ee542ce5754"
            alt="Screenshot 1"
            width="480" />
     </td>
     <td>
-      <img src="https://github.com/user-attachments/assets/e91837ae-3bf7-44fa-b0ff-cafabb7c6fd1"
+      <img src="https://github.com/user-attachments/assets/dc9d1967-9df8-4495-9e95-c2e57a8f71af"
            alt="Screenshot 2"
            width="480" />
     </td>
