@@ -19,8 +19,7 @@ ProofFlow-AI is a full-stack platform that analyzes GitHub repositories to asses
   * Average commits per day
   * Max commits in a single day
 
-### 🧠 AI-Powered Assessment (Optional)
-
+### 🧠 AI-Powered Assessment 
 * Gemini-based analysis (**fully configurable**)
 * Generates:
 
